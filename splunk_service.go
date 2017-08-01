@@ -8,6 +8,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"regexp"
 	"strings"
 	"sync"
 )
@@ -15,21 +16,20 @@ import (
 const (
 	splunkEndpoint            = "/services/search/jobs/export?output_mode=json"
 	defaultEarliestTime       = "-5m"
-	queryTemplate             = `search index=heroku source="http:coco_up" sourcetype="heroku:drain" monitoring_event=true (environment="%s" OR environment="pub-%s") (content_type="%s" OR content_type="") | fields *`
-	transactionsQueryTemplate = `search index=heroku source="http:coco_up" sourcetype="heroku:drain" monitoring_event=true (environment="%s" OR environment="pub-%s") (content_type="%s" OR content_type="") | fields * | transaction transaction_id endswith="event=PublishEnd" keepevicted=true`
+	transactionsQueryTemplate = `search index=heroku source="http:coco_up" sourcetype="heroku:drain" monitoring_event=true (environment="%s" OR environment="pub-%s") (content_type="%s" OR content_type="") | fields * | transaction transaction_id | search event!="PublishEnd"`
 )
 
 // SplunkServiceI Splunk based event reader service
 type SplunkServiceI interface {
-	GetEvents(query monitoringQuery) ([]publishEvent, error)
 	GetTransactions(query monitoringQuery) ([]transactionEvent, error)
 	doQuery(queryString string) ([]splunkRow, error)
 }
 
 type splunkAccessConfig struct {
-	user     string
-	password string
-	restURL  string
+	user        string
+	password    string
+	restURL     string
+	environment string
 }
 
 type splunkService struct {
@@ -39,9 +39,10 @@ type splunkService struct {
 }
 
 type monitoringQuery struct {
-	Environment  string
-	ContentType  string
-	EarliestTime string
+	ContentType   string
+	EarliestTime  string
+	UUIDs         []string
+	TransactionID string
 }
 
 type splunkRow struct {
@@ -71,41 +72,22 @@ type splunkTransactionEvent struct {
 	transactionEvent
 }
 
-func (service *splunkService) GetEvents(query monitoringQuery) ([]publishEvent, error) {
-
-	queryString := fmt.Sprintf(queryTemplate, query.Environment, query.Environment, query.ContentType)
-
-	v := url.Values{}
-	v.Set("search", queryString)
-	if query.EarliestTime != "" {
-		v.Set("earliest_time", query.EarliestTime)
-	} else {
-		v.Set("earliest_time", defaultEarliestTime)
-	}
-
-	rows, err := service.doQuery(v.Encode())
-	if err != nil {
-		return nil, err
-	}
-
-	results := []publishEvent{}
-	for _, row := range rows {
-		result := splunkPublishEvent{}
-		err = json.Unmarshal(*row.Result, &result)
-		if err != nil {
-			fmt.Print(err)
-		}
-		if err == nil {
-			results = append(results, result.publishEvent)
-		}
-
-	}
-	return results, nil
-}
-
 func (service *splunkService) GetTransactions(query monitoringQuery) ([]transactionEvent, error) {
 
-	queryString := fmt.Sprintf(transactionsQueryTemplate, query.Environment, query.Environment, query.ContentType)
+	envRegex := regexp.MustCompile("-u[ks]]$")
+	queryString := fmt.Sprintf(transactionsQueryTemplate, service.Config.environment, envRegex.ReplaceAllString(service.Config.environment, "*"), query.ContentType)
+
+	if query.TransactionID != "" {
+		queryString += fmt.Sprintf(" transaction_id = %s", query.TransactionID)
+	}
+
+	if len(query.UUIDs) > 0 {
+		queryString += " uuid IN ("
+		for _, uuid := range query.UUIDs {
+			queryString += fmt.Sprintf(`"%s",`, uuid)
+		}
+		queryString += ")"
+	}
 
 	v := url.Values{}
 	v.Set("search", queryString)
@@ -124,29 +106,31 @@ func (service *splunkService) GetTransactions(query monitoringQuery) ([]transact
 	transactions := []transactionEvent{}
 	for _, row := range rows {
 		splunkTransaction := splunkTransactionEvent{}
-		err = json.Unmarshal(*row.Result, &splunkTransaction)
-		if err != nil {
-			fmt.Println(err)
-		}
-		if err == nil {
-			events := []publishEvent{}
-			decoder := json.NewDecoder(strings.NewReader(splunkTransaction.Raw))
-			for {
-				event := publishEvent{}
-				err = decoder.Decode(&event)
-				if err == io.EOF {
-					break
-				}
-				if err != nil {
-					fmt.Print(err)
-				}
-				if err == nil {
-					events = append(events, event)
-				}
+		if row.Result != nil && len(*row.Result) > 0 {
+			err = json.Unmarshal(*row.Result, &splunkTransaction)
+			if err != nil {
+				fmt.Println(err)
 			}
-			transaction := splunkTransaction.transactionEvent
-			transaction.Events = events
-			transactions = append(transactions, transaction)
+			if err == nil {
+				events := []publishEvent{}
+				decoder := json.NewDecoder(strings.NewReader(splunkTransaction.Raw))
+				for {
+					event := publishEvent{}
+					err = decoder.Decode(&event)
+					if err == io.EOF {
+						break
+					}
+					if err != nil {
+						fmt.Print(err)
+					}
+					if err == nil {
+						events = append(events, event)
+					}
+				}
+				transaction := splunkTransaction.transactionEvent
+				transaction.Events = events
+				transactions = append(transactions, transaction)
+			}
 		}
 	}
 	return transactions, nil

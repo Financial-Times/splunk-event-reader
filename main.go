@@ -3,13 +3,18 @@ package main
 import (
 	"fmt"
 	health "github.com/Financial-Times/go-fthealth/v1_1"
+	"github.com/Financial-Times/http-handlers-go/httphandlers"
 	status "github.com/Financial-Times/service-status-go/httphandlers"
+	"github.com/Sirupsen/logrus"
 	log "github.com/Sirupsen/logrus"
 	"github.com/davecgh/go-spew/spew"
+	"github.com/gorilla/mux"
 	"github.com/jawher/mow.cli"
+	"github.com/rcrowley/go-metrics"
 	"net/http"
 	"os"
 	"os/signal"
+	"sync"
 	"syscall"
 )
 
@@ -39,6 +44,13 @@ func main() {
 		EnvVar: "APP_PORT",
 	})
 
+	environment := app.String(cli.StringOpt{
+		Name:   "environment",
+		Value:  "xp",
+		Desc:   "Name of the cluster",
+		EnvVar: "ENVIRONMENT",
+	})
+
 	splunkUser := app.String(cli.StringOpt{
 		Name:   "splunk-user",
 		Value:  "upp-api",
@@ -66,11 +78,11 @@ func main() {
 	app.Action = func() {
 		log.Infof("System code: %s, App Name: %s, Port: %s", *appSystemCode, *appName, *port)
 
-		go func() {
-			serveAdminEndpoints(*appSystemCode, *appName, *port)
-		}()
+		splunkService := newSplunkService(splunkAccessConfig{user: *splunkUser, password: *splunkPassword, restURL: *splunkURL, environment: *environment})
 
-		splunkService := newSplunkService(splunkAccessConfig{user: *splunkUser, password: *splunkPassword, restURL: *splunkURL})
+		go func() {
+			serveAdminEndpoints(*appSystemCode, *appName, *port, requestHandler{splunkService: splunkService})
+		}()
 
 		demoSplunkCall(splunkService)
 
@@ -85,7 +97,7 @@ func main() {
 
 func demoSplunkCall(service SplunkServiceI) {
 	//results, err := splunkService.GetEvents(monitoringQuery{Environment: "xp", ContentType: "annotations", EarliestTime: "-5m"})
-	results, err := service.GetTransactions(monitoringQuery{Environment: "xp", ContentType: "annotations", EarliestTime: "-5m"})
+	results, err := service.GetTransactions(monitoringQuery{ContentType: "annotations", EarliestTime: "-5m"})
 	if err != nil {
 		log.Errorf("Could not get splunk results, error=[%s]\n", err)
 	}
@@ -93,7 +105,7 @@ func demoSplunkCall(service SplunkServiceI) {
 	spew.Dump(results)
 }
 
-func serveAdminEndpoints(appSystemCode string, appName string, port string) {
+func serveAdminEndpoints(appSystemCode string, appName string, port string, requestHandler requestHandler) {
 	healthService := newHealthService(&healthConfig{appSystemCode: appSystemCode, appName: appName, port: port})
 
 	serveMux := http.NewServeMux()
@@ -103,9 +115,36 @@ func serveAdminEndpoints(appSystemCode string, appName string, port string) {
 	serveMux.HandleFunc(status.GTGPath, status.NewGoodToGoHandler(healthService.gtgCheck))
 	serveMux.HandleFunc(status.BuildInfoPath, status.BuildInfoHandler)
 
-	if err := http.ListenAndServe(":"+port, serveMux); err != nil {
-		log.Fatalf("Unable to start: %v", err)
+	servicesRouter := mux.NewRouter()
+	servicesRouter.HandleFunc("/{contentType}/transactions", requestHandler.getTransactions).Methods("GET")
+	servicesRouter.HandleFunc("/{contentType}/transactions/{transactionId}", requestHandler.getTransactionsByID).Methods("GET")
+
+	var monitoringRouter http.Handler = servicesRouter
+	monitoringRouter = httphandlers.TransactionAwareRequestLoggingHandler(logrus.StandardLogger(), monitoringRouter)
+	monitoringRouter = httphandlers.HTTPMetricsHandler(metrics.DefaultRegistry, monitoringRouter)
+
+	serveMux.Handle("/", monitoringRouter)
+
+	server := &http.Server{Addr: ":" + port, Handler: serveMux}
+
+	wg := sync.WaitGroup{}
+
+	wg.Add(1)
+	go func() {
+		if err := server.ListenAndServe(); err != nil {
+			logrus.Infof("HTTP server closing with message: %v", err)
+		}
+		wg.Done()
+	}()
+
+	waitForSignal()
+	logrus.Infof("[Shutdown] PostPublicationCombiner is shutting down")
+
+	if err := server.Close(); err != nil {
+		logrus.Errorf("Unable to stop http server: %v", err)
 	}
+
+	wg.Wait()
 }
 
 func waitForSignal() {
