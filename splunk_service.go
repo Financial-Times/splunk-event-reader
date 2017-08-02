@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"crypto/tls"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -15,7 +16,7 @@ import (
 
 const (
 	splunkEndpoint            = "/services/search/jobs/export?output_mode=json"
-	defaultEarliestTime       = "-5m"
+	defaultEarliestTime       = "-10m"
 	transactionsQueryTemplate = `search index=heroku source="http:coco_up" sourcetype="heroku:drain" monitoring_event=true (environment="%s" OR environment="pub-%s") (content_type="%s" OR content_type="") | fields * | transaction transaction_id | search event!="PublishEnd"`
 )
 
@@ -23,6 +24,7 @@ const (
 type SplunkServiceI interface {
 	GetTransactions(query monitoringQuery) ([]transactionEvent, error)
 	doQuery(queryString string) ([]splunkRow, error)
+	IsHealthy() (string, error)
 }
 
 type splunkAccessConfig struct {
@@ -157,6 +159,22 @@ func (service *splunkService) doQuery(query string) ([]splunkRow, error) {
 		}
 	}
 	return rows, nil
+}
+
+func (service *splunkService) IsHealthy() (string, error) {
+	v := url.Values{}
+	v.Set("search", "index=_audit")
+	v.Set("earliest_time", "-10s")
+
+	rows, err := service.doQuery(v.Encode())
+	if err != nil {
+		return "Splunk error", err
+	}
+	if rows == nil || len(rows) == 0 {
+		return "No results from Splunk", errors.New("no results from splunk")
+	}
+
+	return "Splunk is ok", nil
 }
 
 func newSplunkService(config splunkAccessConfig) SplunkServiceI {

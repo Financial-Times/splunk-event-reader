@@ -1,13 +1,11 @@
 package main
 
 import (
-	"fmt"
 	health "github.com/Financial-Times/go-fthealth/v1_1"
 	"github.com/Financial-Times/http-handlers-go/httphandlers"
 	status "github.com/Financial-Times/service-status-go/httphandlers"
 	"github.com/Sirupsen/logrus"
 	log "github.com/Sirupsen/logrus"
-	"github.com/davecgh/go-spew/spew"
 	"github.com/gorilla/mux"
 	"github.com/jawher/mow.cli"
 	"github.com/rcrowley/go-metrics"
@@ -81,10 +79,8 @@ func main() {
 		splunkService := newSplunkService(splunkAccessConfig{user: *splunkUser, password: *splunkPassword, restURL: *splunkURL, environment: *environment})
 
 		go func() {
-			serveAdminEndpoints(*appSystemCode, *appName, *port, requestHandler{splunkService: splunkService})
+			routeRequests(*appSystemCode, *appName, *port, splunkService)
 		}()
-
-		demoSplunkCall(splunkService)
 
 		waitForSignal()
 	}
@@ -95,18 +91,9 @@ func main() {
 	}
 }
 
-func demoSplunkCall(service SplunkServiceI) {
-	//results, err := splunkService.GetEvents(monitoringQuery{Environment: "xp", ContentType: "annotations", EarliestTime: "-5m"})
-	results, err := service.GetTransactions(monitoringQuery{ContentType: "annotations", EarliestTime: "-5m"})
-	if err != nil {
-		log.Errorf("Could not get splunk results, error=[%s]\n", err)
-	}
-	fmt.Printf("Received %d events\n", len(results))
-	spew.Dump(results)
-}
-
-func serveAdminEndpoints(appSystemCode string, appName string, port string, requestHandler requestHandler) {
-	healthService := newHealthService(&healthConfig{appSystemCode: appSystemCode, appName: appName, port: port})
+func routeRequests(appSystemCode string, appName string, port string, splunkService SplunkServiceI) {
+	requestHandler := requestHandler{splunkService: splunkService}
+	healthService := newHealthService(&healthConfig{appSystemCode: appSystemCode, appName: appName, port: port}, splunkService)
 
 	serveMux := http.NewServeMux()
 
@@ -138,7 +125,7 @@ func serveAdminEndpoints(appSystemCode string, appName string, port string, requ
 	}()
 
 	waitForSignal()
-	logrus.Infof("[Shutdown] PostPublicationCombiner is shutting down")
+	logrus.Infof("[Shutdown] SplunkEventReader is shutting down")
 
 	if err := server.Close(); err != nil {
 		logrus.Errorf("Unable to stop http server: %v", err)

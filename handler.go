@@ -2,8 +2,25 @@ package main
 
 import (
 	"encoding/json"
+	"github.com/Sirupsen/logrus"
 	"github.com/gorilla/mux"
+	"github.com/satori/go.uuid"
 	"net/http"
+	"regexp"
+)
+
+const (
+	uuidPathVar            = "uuid"
+	transactionIDPathVar   = "transactionId"
+	intervalPathVar        = "interval"
+	contentTypePathVar     = "contentType"
+	contentTypeAnnotations = "annotations"
+)
+
+var (
+	contentTypes  = []string{contentTypeAnnotations}
+	tidRegex      = regexp.MustCompile(`^[-_a-zA-Z0-9]+$`)
+	intervalRegex = regexp.MustCompile(`^\d+[msh]$`)
 )
 
 type requestHandler struct {
@@ -13,9 +30,35 @@ type requestHandler struct {
 func (handler *requestHandler) getTransactions(writer http.ResponseWriter, request *http.Request) {
 	defer request.Body.Close()
 
-	contentType := mux.Vars(request)["contentType"]
-	uuids := request.URL.Query()["uuid"]
-	transactions, err := handler.splunkService.GetTransactions(monitoringQuery{EarliestTime: "-5m", ContentType: contentType, UUIDs: uuids})
+	contentType := mux.Vars(request)[contentTypePathVar]
+	uuids := request.URL.Query()[uuidPathVar]
+	interval := request.URL.Query().Get(intervalPathVar)
+
+	if !isValidContentType(contentType) {
+		logrus.Errorf("Invalid content type %s", contentType)
+		writer.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	for _, uuid := range uuids {
+		if !isValidUUID(uuid) {
+			logrus.Errorf("Invalid UUID %s", uuid)
+			writer.WriteHeader(http.StatusBadRequest)
+			return
+		}
+	}
+
+	if interval != "" && !isValidInterval(interval) {
+		logrus.Errorf("Invalid interval %s", interval)
+		writer.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	query := monitoringQuery{ContentType: contentType, UUIDs: uuids}
+	if interval != "" {
+		query.EarliestTime = "-" + interval
+	}
+	transactions, err := handler.splunkService.GetTransactions(query)
 
 	switch err {
 	case nil:
@@ -26,13 +69,36 @@ func (handler *requestHandler) getTransactions(writer http.ResponseWriter, reque
 		writer.WriteHeader(http.StatusInternalServerError)
 	}
 }
-
 func (handler *requestHandler) getTransactionsByID(writer http.ResponseWriter, request *http.Request) {
 	defer request.Body.Close()
 
-	contentType := mux.Vars(request)["contentType"]
-	id := mux.Vars(request)["transactionId"]
-	transactions, err := handler.splunkService.GetTransactions(monitoringQuery{EarliestTime: "-5m", ContentType: contentType, TransactionID: id})
+	contentType := mux.Vars(request)[contentTypePathVar]
+	id := mux.Vars(request)[transactionIDPathVar]
+	interval := request.URL.Query().Get(intervalPathVar)
+
+	if !isValidContentType(contentType) {
+		logrus.Errorf("Invalid content type %s", contentType)
+		writer.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	if id != "" && !isValidTransactionID(id) {
+		logrus.Errorf("Invalid transaction id %s", id)
+		writer.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	if interval != "" && !isValidInterval(interval) {
+		logrus.Errorf("Invalid interval %s", interval)
+		writer.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	query := monitoringQuery{ContentType: contentType, TransactionID: id}
+	if interval != "" {
+		query.EarliestTime = "-" + interval
+	}
+	transactions, err := handler.splunkService.GetTransactions(query)
 
 	switch err {
 	case nil:
@@ -46,4 +112,26 @@ func (handler *requestHandler) getTransactionsByID(writer http.ResponseWriter, r
 	default:
 		writer.WriteHeader(http.StatusInternalServerError)
 	}
+}
+
+func isValidContentType(contentType string) bool {
+	for _, ct := range contentTypes {
+		if contentType == ct {
+			return true
+		}
+	}
+	return false
+}
+
+func isValidTransactionID(transactionID string) bool {
+	return tidRegex.MatchString(transactionID)
+}
+
+func isValidInterval(interval string) bool {
+	return intervalRegex.MatchString(interval)
+}
+
+func isValidUUID(id string) bool {
+	_, err := uuid.FromString(id)
+	return err == nil
 }
