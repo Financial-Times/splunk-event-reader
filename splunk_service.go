@@ -146,6 +146,10 @@ func (service *splunkService) doQuery(query string) ([]splunkRow, error) {
 	if err != nil {
 		return nil, err
 	}
+	if resp.StatusCode != http.StatusOK {
+		return nil, errors.New(resp.Status)
+	}
+
 	var rows []splunkRow
 	decoder := json.NewDecoder(bufio.NewReader(resp.Body))
 	for {
