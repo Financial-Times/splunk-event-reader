@@ -53,7 +53,7 @@ func main() {
 
 	splunkUser := app.String(cli.StringOpt{
 		Name:   "splunk-user",
-		Value:  "upp-api",
+		Value:  "",
 		Desc:   "Splunk user name",
 		EnvVar: "SPLUNK_USER",
 	})
@@ -67,7 +67,7 @@ func main() {
 
 	splunkURL := app.String(cli.StringOpt{
 		Name:   "splunk-url",
-		Value:  "https://financialtimes.splunkcloud.com:8089",
+		Value:  "",
 		Desc:   "Splunk URL",
 		EnvVar: "SPLUNK_URL",
 	})
