@@ -105,6 +105,7 @@ func routeRequests(appSystemCode string, appName string, port string, splunkServ
 	servicesRouter := mux.NewRouter()
 	servicesRouter.HandleFunc("/{contentType}/transactions", requestHandler.getTransactions).Methods("GET")
 	servicesRouter.HandleFunc("/{contentType}/transactions/{transactionId}", requestHandler.getTransactionsByID).Methods("GET")
+	servicesRouter.HandleFunc("/{contentType}/events", requestHandler.getLastEvent).Methods("GET")
 
 	var monitoringRouter http.Handler = servicesRouter
 	monitoringRouter = httphandlers.TransactionAwareRequestLoggingHandler(logrus.StandardLogger(), monitoringRouter)

@@ -18,11 +18,16 @@ const (
 	splunkEndpoint            = "/services/search/jobs/export?output_mode=json"
 	defaultEarliestTime       = "-10m"
 	transactionsQueryTemplate = `search index=heroku source="http:coco_up" sourcetype="heroku:drain" monitoring_event=true (environment="%s" OR environment="pub-%s") (content_type="%s" OR content_type="") | fields * | transaction transaction_id | search event!="PublishEnd"`
+	latestEventQueryTemplate  = `search index=heroku source="http:coco_up" sourcetype="heroku:drain" monitoring_event=true (environment="%s" OR environment="pub-%s") (content_type="%s" OR content_type="") event="PublishEnd" | fields * | head 1`
+	healthcheckQuery          = `search index=_audit | head 1`
 )
+
+var NoResultsError = errors.New("No results")
 
 // SplunkServiceI Splunk based event reader service
 type SplunkServiceI interface {
 	GetTransactions(query monitoringQuery) ([]transactionEvent, error)
+	GetLastEvent(query monitoringQuery) (*publishEvent, error)
 	doQuery(queryString string) ([]splunkRow, error)
 	IsHealthy() (string, error)
 }
@@ -111,7 +116,7 @@ func (service *splunkService) GetTransactions(query monitoringQuery) ([]transact
 		if row.Result != nil && len(*row.Result) > 0 {
 			err = json.Unmarshal(*row.Result, &splunkTransaction)
 			if err != nil {
-				fmt.Println(err)
+				return nil, err
 			}
 			if err == nil {
 				events := []publishEvent{}
@@ -123,7 +128,7 @@ func (service *splunkService) GetTransactions(query monitoringQuery) ([]transact
 						break
 					}
 					if err != nil {
-						fmt.Print(err)
+						return nil, err
 					}
 					if err == nil {
 						events = append(events, event)
@@ -136,6 +141,38 @@ func (service *splunkService) GetTransactions(query monitoringQuery) ([]transact
 		}
 	}
 	return transactions, nil
+}
+
+func (service *splunkService) GetLastEvent(query monitoringQuery) (*publishEvent, error) {
+
+	envRegex := regexp.MustCompile("-u[ks]]$")
+	queryString := fmt.Sprintf(latestEventQueryTemplate, service.Config.environment, envRegex.ReplaceAllString(service.Config.environment, "*"), query.ContentType)
+
+	v := url.Values{}
+	v.Set("search", queryString)
+	if query.EarliestTime != "" {
+		v.Set("earliest_time", query.EarliestTime)
+	}
+
+	rows, err := service.doQuery(v.Encode())
+	if err != nil {
+		return nil, err
+	}
+
+	if len(rows) > 0 {
+		row := rows[0]
+		splunkPublishEvent := splunkPublishEvent{}
+		if row.Result != nil && len(*row.Result) > 0 {
+			err = json.Unmarshal(*row.Result, &splunkPublishEvent)
+			if err != nil {
+				return nil, err
+			}
+			if err == nil {
+				return &splunkPublishEvent.publishEvent, nil
+			}
+		}
+	}
+	return nil, NoResultsError
 }
 
 func (service *splunkService) doQuery(query string) ([]splunkRow, error) {
@@ -167,7 +204,7 @@ func (service *splunkService) doQuery(query string) ([]splunkRow, error) {
 
 func (service *splunkService) IsHealthy() (string, error) {
 	v := url.Values{}
-	v.Set("search", "index=_audit")
+	v.Set("search", healthcheckQuery)
 	v.Set("earliest_time", "-10s")
 
 	rows, err := service.doQuery(v.Encode())

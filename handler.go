@@ -13,6 +13,7 @@ const (
 	uuidPathVar            = "uuid"
 	transactionIDPathVar   = "transactionId"
 	intervalPathVar        = "interval"
+	lastEventPathVar       = "lastEvent"
 	contentTypePathVar     = "contentType"
 	contentTypeAnnotations = "annotations"
 )
@@ -69,6 +70,7 @@ func (handler *requestHandler) getTransactions(writer http.ResponseWriter, reque
 		writer.WriteHeader(http.StatusInternalServerError)
 	}
 }
+
 func (handler *requestHandler) getTransactionsByID(writer http.ResponseWriter, request *http.Request) {
 	defer request.Body.Close()
 
@@ -112,6 +114,54 @@ func (handler *requestHandler) getTransactionsByID(writer http.ResponseWriter, r
 	default:
 		writer.WriteHeader(http.StatusInternalServerError)
 	}
+}
+
+func (handler *requestHandler) getLastEvent(writer http.ResponseWriter, request *http.Request) {
+	defer request.Body.Close()
+
+	contentType := mux.Vars(request)[contentTypePathVar]
+	interval := request.URL.Query().Get(intervalPathVar)
+	lastEvent := request.URL.Query().Get(lastEventPathVar)
+
+	if !isValidContentType(contentType) {
+		logrus.Errorf("Invalid content type %s", contentType)
+		writer.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	if !isValidLastEventFlag(lastEvent) {
+		logrus.Errorf("lastEvent param must be true for the /events endpoint, value is %s", lastEvent)
+		writer.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	if interval != "" && !isValidInterval(interval) {
+		logrus.Errorf("Invalid interval %s", interval)
+		writer.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	query := monitoringQuery{ContentType: contentType}
+	if interval != "" {
+		query.EarliestTime = "-" + interval
+	}
+	publishEvent, err := handler.splunkService.GetLastEvent(query)
+
+	switch err {
+	case nil:
+		writer.WriteHeader(http.StatusOK)
+		msg, _ := json.Marshal(*publishEvent)
+		writer.Write([]byte(msg))
+
+	case NoResultsError:
+		writer.WriteHeader(http.StatusNotFound)
+	default:
+		writer.WriteHeader(http.StatusInternalServerError)
+	}
+}
+
+func isValidLastEventFlag(lastEvent string) bool {
+	return lastEvent == "true"
 }
 
 func isValidContentType(contentType string) bool {
