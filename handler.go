@@ -104,14 +104,11 @@ func (handler *requestHandler) getTransactionsByID(writer http.ResponseWriter, r
 
 	switch err {
 	case nil:
-		if len(transactions) > 0 {
-			writer.WriteHeader(http.StatusOK)
-			msg, _ := json.Marshal(transactions[0])
-			writer.Write([]byte(msg))
-		} else {
-			writer.WriteHeader(http.StatusNotFound)
-		}
+		writer.WriteHeader(http.StatusOK)
+		msg, _ := json.Marshal(transactions[0])
+		writer.Write([]byte(msg))
 	default:
+		logrus.Error(err)
 		writer.WriteHeader(http.StatusInternalServerError)
 	}
 }
