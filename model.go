@@ -10,7 +10,7 @@ type publishEvent struct {
 	Msg             string `json:"msg"`
 	Platform        string `json:"platform"`
 	ServiceName     string `json:"service_name"`
-	Time            string `json:"time"`
+	Time            string `json:"@time"`
 	TransactionID   string `json:"transaction_id"`
 	UUID            string `json:"uuid"`
 }
