@@ -17,8 +17,8 @@ import (
 const (
 	splunkEndpoint            = "/services/search/jobs/export?output_mode=json"
 	defaultEarliestTime       = "-10m"
-	transactionsQueryTemplate = `search index=heroku source="http:coco_up" sourcetype="heroku:drain" monitoring_event=true (environment="%s" OR environment="pub-%s") (content_type="%s" OR content_type="") | fields * | transaction transaction_id | search event!="PublishEnd"`
-	latestEventQueryTemplate  = `search index=heroku source="http:coco_up" sourcetype="heroku:drain" monitoring_event=true (environment="%s" OR environment="pub-%s") (content_type="%s" OR content_type="") event="PublishEnd" | fields * | head 1`
+	transactionsQueryTemplate = `search index=heroku source="http:upp" sourcetype="heroku:drain" monitoring_event=true (environment="%s" OR environment="pub-%s") (content_type="%s" OR content_type="") | fields * | transaction transaction_id | search event!="PublishEnd"`
+	latestEventQueryTemplate  = `search index=heroku source="http:upp" sourcetype="heroku:drain" monitoring_event=true (environment="%s" OR environment="pub-%s") (content_type="%s" OR content_type="") event="PublishEnd" | fields * | head 1`
 	healthcheckQuery          = `search index=_audit | head 1`
 )
 
