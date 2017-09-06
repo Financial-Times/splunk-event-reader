@@ -3,13 +3,17 @@ package main
 import (
 	health "github.com/Financial-Times/go-fthealth/v1_1"
 	"github.com/Financial-Times/service-status-go/gtg"
+	"sync"
+	"time"
 )
 
 const healthPath = "/__health"
 
 type healthService struct {
-	config *healthConfig
+	*sync.Mutex
 	checks []health.Check
+	config healthConfig
+	stop   chan bool
 }
 
 type healthConfig struct {
@@ -18,30 +22,71 @@ type healthConfig struct {
 	port          string
 }
 
-func newHealthService(config *healthConfig, splunkService SplunkServiceI) *healthService {
-	service := &healthService{config: config}
+type healthStatus struct {
+	message string
+	err     error
+}
+
+var splunkHealth healthStatus
+
+func newHealthService(config healthConfig, check func() healthStatus) *healthService {
+	service := &healthService{&sync.Mutex{}, nil, config, nil}
 	service.checks = []health.Check{
-		service.splunkCheck(splunkService),
+		service.splunkCheck(),
 	}
+	service.doHealthCheck(check)
 	return service
 }
 
-func (service *healthService) splunkCheck(splunkService SplunkServiceI) health.Check {
+func (hs *healthService) splunkCheck() health.Check {
 	return health.Check{
 		BusinessImpact:   "Monitoring of publishing events is hindered. SLA compliance cannot be tracked",
 		Name:             "Splunk healthcheck",
 		PanicGuide:       "https://dewey.ft.com/splunk-event-reader.html",
 		Severity:         1,
 		TechnicalSummary: "Splunk is not able to return results, therefore publishing transactions can not be processed. Check Splunk REST API availability.",
-		Checker:          splunkService.IsHealthy,
+		Checker:          hs.getSplunkHealth,
 	}
 }
 
-func (service *healthService) gtgCheck() gtg.Status {
-	for _, check := range service.checks {
+func (hs *healthService) gtgCheck() gtg.Status {
+	for _, check := range hs.checks {
 		if _, err := check.Checker(); err != nil {
 			return gtg.Status{GoodToGo: false, Message: err.Error()}
 		}
 	}
 	return gtg.Status{GoodToGo: true}
+}
+
+func (hs *healthService) doHealthCheck(check func() healthStatus) {
+	hs.updateSplunkHealth(check())
+	t := time.NewTicker(1 * time.Minute)
+	hs.stop = make(chan bool)
+
+	go func() {
+		for {
+			select {
+			case <-t.C:
+				hs.updateSplunkHealth(check())
+				break
+			case <-hs.stop:
+				t.Stop()
+				return
+			}
+		}
+	}()
+}
+
+func (hs healthService) updateSplunkHealth(newStatus healthStatus) {
+	hs.Lock()
+	splunkHealth = newStatus
+	hs.Unlock()
+}
+
+func (hs healthService) getSplunkHealth() (msg string, err error) {
+	hs.Lock()
+	msg = splunkHealth.message
+	err = splunkHealth.err
+	hs.Unlock()
+	return msg, err
 }
