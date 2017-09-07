@@ -51,21 +51,18 @@ func main() {
 
 	splunkUser := app.String(cli.StringOpt{
 		Name:   "splunk-user",
-		Value:  "",
 		Desc:   "Splunk user name",
 		EnvVar: "SPLUNK_USER",
 	})
 
 	splunkPassword := app.String(cli.StringOpt{
 		Name:   "splunk-password",
-		Value:  "",
 		Desc:   "Splunk password",
 		EnvVar: "SPLUNK_PASSWORD",
 	})
 
 	splunkURL := app.String(cli.StringOpt{
 		Name:   "splunk-url",
-		Value:  "",
 		Desc:   "Splunk URL",
 		EnvVar: "SPLUNK_URL",
 	})
@@ -77,12 +74,15 @@ func main() {
 		log.Infof("System code: %s, App Name: %s, Port: %s", *appSystemCode, *appName, *port)
 
 		splunkService := newSplunkService(splunkAccessConfig{user: *splunkUser, password: *splunkPassword, restURL: *splunkURL, environment: *environment})
+		healthService := newHealthService(healthConfig{appSystemCode: *appSystemCode, appName: *appName, port: *port}, splunkService.IsHealthy)
 
 		go func() {
-			routeRequests(*appSystemCode, *appName, *port, splunkService)
+			routeRequests(splunkService, healthService, *port)
 		}()
 
 		waitForSignal()
+		healthService.stop <- true
+
 	}
 	err := app.Run(os.Args)
 	if err != nil {
@@ -91,13 +91,12 @@ func main() {
 	}
 }
 
-func routeRequests(appSystemCode string, appName string, port string, splunkService SplunkServiceI) {
+func routeRequests(splunkService SplunkServiceI, healthService *healthService, port string) {
 	requestHandler := requestHandler{splunkService: splunkService}
-	healthService := newHealthService(&healthConfig{appSystemCode: appSystemCode, appName: appName, port: port}, splunkService)
 
 	serveMux := http.NewServeMux()
 
-	hc := health.HealthCheck{SystemCode: appSystemCode, Name: appName, Description: appDescription, Checks: healthService.checks}
+	hc := health.HealthCheck{SystemCode: healthService.config.appSystemCode, Name: healthService.config.appName, Description: appDescription, Checks: healthService.checks}
 	serveMux.HandleFunc(healthPath, health.Handler(hc))
 	serveMux.HandleFunc(status.GTGPath, status.NewGoodToGoHandler(healthService.gtgCheck))
 	serveMux.HandleFunc(status.BuildInfoPath, status.BuildInfoHandler)
