@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/giantswarm/retry-go"
 	"io"
 	"net/http"
 	"net/url"
@@ -29,7 +30,7 @@ type SplunkServiceI interface {
 	GetTransactions(query monitoringQuery) ([]transactionEvent, error)
 	GetLastEvent(query monitoringQuery) (*publishEvent, error)
 	doQuery(queryString string) ([]splunkRow, error)
-	IsHealthy() (string, error)
+	IsHealthy() healthStatus
 }
 
 type splunkAccessConfig struct {
@@ -179,12 +180,22 @@ func (service *splunkService) doQuery(query string) ([]splunkRow, error) {
 
 	req, err := http.NewRequest("POST", service.Config.restURL+splunkEndpoint, strings.NewReader(query))
 	req.SetBasicAuth(service.Config.user, service.Config.password)
-	resp, err := service.HTTPClient.Do(req)
+
+	var resp *http.Response
+	httpCall := func() error {
+		resp, err = service.HTTPClient.Do(req)
+		if err != nil {
+			return err
+		}
+		if resp.StatusCode != http.StatusOK {
+			return errors.New(resp.Status)
+		}
+		return nil
+	}
+
+	err = retry.Do(httpCall, retry.RetryChecker(func(e error) bool { return e != nil }), retry.MaxTries(2))
 	if err != nil {
 		return nil, err
-	}
-	if resp.StatusCode != http.StatusOK {
-		return nil, errors.New(resp.Status)
 	}
 
 	var rows []splunkRow
@@ -202,20 +213,20 @@ func (service *splunkService) doQuery(query string) ([]splunkRow, error) {
 	return rows, nil
 }
 
-func (service *splunkService) IsHealthy() (string, error) {
+func (service *splunkService) IsHealthy() healthStatus {
 	v := url.Values{}
 	v.Set("search", healthcheckQuery)
 	v.Set("earliest_time", "-10s")
 
 	rows, err := service.doQuery(v.Encode())
 	if err != nil {
-		return "Splunk error", err
-	}
-	if rows == nil || len(rows) == 0 {
-		return "No results from Splunk", errors.New("no results from splunk")
-	}
+		return healthStatus{message: "Splunk error", err: err}
 
-	return "Splunk is ok", nil
+	} else if rows == nil || len(rows) == 0 {
+		return healthStatus{message: "No results from Splunk", err: errors.New("no results from splunk")}
+
+	}
+	return healthStatus{message: "Splunk is ok"}
 }
 
 func newSplunkService(config splunkAccessConfig) SplunkServiceI {
