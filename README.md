@@ -1,18 +1,13 @@
 # splunk-event-reader
-_Should be the same as the github repo name but it isn't always._
 
 [![Circle CI](https://circleci.com/gh/Financial-Times/splunk-event-reader/tree/master.png?style=shield)](https://circleci.com/gh/Financial-Times/splunk-event-reader/tree/master)[![Go Report Card](https://goreportcard.com/badge/github.com/Financial-Times/splunk-event-reader)](https://goreportcard.com/report/github.com/Financial-Times/splunk-event-reader) [![Coverage Status](https://coveralls.io/repos/github/Financial-Times/splunk-event-reader/badge.svg)](https://coveralls.io/github/Financial-Times/splunk-event-reader)
 
 ## Introduction
 
-_What is this service and what is it for? What other services does it depend on_
-
-Reads Splunk events via the Splunk REST API
+Reads Splunk monitoring events and transactions via the Splunk REST API
 
 ## Installation
       
-_How can I install it_
-
 Download the source code, dependencies and test dependencies:
 
         go get -u github.com/kardianos/govendor
@@ -22,7 +17,6 @@ Download the source code, dependencies and test dependencies:
         go build .
 
 ## Running locally
-_How can I run it_
 
 1. Run the tests and install the binary:
 
@@ -51,15 +45,12 @@ Options:
             curl http://localhost:8080/transactions | json_pp
 
 ## Build and deployment
-_How can I build and deploy it (lots of this will be links out as the steps will be common)_
 
 * Built by Docker Hub on merge to master: [coco/splunk-event-reader](https://hub.docker.com/r/coco/splunk-event-reader/)
 * CI provided by CircleCI: [splunk-event-reader](https://circleci.com/gh/Financial-Times/splunk-event-reader)
 
 ## Service endpoints
-_What are the endpoints offered by the service_
 
-e.g.
 ### GET
 
 `/{contentType}/transactions?[interval={relativeTime}][&uuid={uuid}]`
@@ -103,6 +94,7 @@ Response example:
 Returns the last `PublishEnd` event within the interval
 
 * contentType - as above
+* lastEvent - mandatory and needs to be `true`, as this is the only functionality of the endpoint. Returns `403` otherwise
 * relativeTime - earliest time to search from, in minutes or seconds. If not specified, search is performed on all time (this can be costly if there is no such event in he index)
 
 Response example:
@@ -138,9 +130,9 @@ These are the checks performed:
 * Splunk availability check. This is actually cached for 1 minute based on the last Splunk API call result
 
 ## Other information
-_Anything else you want to add._
 
-_e.g. (NB: this example may be something we want to extract as it's probably common to a lot of services)_
+Endpoints on this service should be used in moderation, as there are both user level and system wide limits to concurrent searches.
+As Splunk requests may fail due to these (or other) limitation, a retry mechanism is in place that attempts each query up to 3 times in a row. 
 
 ### Logging
 
