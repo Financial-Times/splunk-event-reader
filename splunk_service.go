@@ -51,10 +51,9 @@ type splunkService struct {
 }
 
 type monitoringQuery struct {
-	ContentType   string
-	EarliestTime  string
-	UUIDs         []string
-	TransactionID string
+	ContentType  string
+	EarliestTime string
+	UUIDs        []string
 }
 
 type splunkRow struct {
@@ -88,10 +87,6 @@ func (service *splunkService) GetTransactions(query monitoringQuery) ([]transact
 
 	envRegex := regexp.MustCompile("-u[ks]]$")
 	queryString := fmt.Sprintf(transactionsQueryTemplate, service.Config.environment, envRegex.ReplaceAllString(service.Config.environment, "*"), query.ContentType)
-
-	if query.TransactionID != "" {
-		queryString += fmt.Sprintf(" transaction_id = %s", query.TransactionID)
-	}
 
 	if len(query.UUIDs) > 0 {
 		queryString += " uuid IN ("

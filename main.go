@@ -44,7 +44,7 @@ func main() {
 
 	environment := app.String(cli.StringOpt{
 		Name:   "environment",
-		Value:  "xp",
+		Value:  "",
 		Desc:   "Name of the cluster",
 		EnvVar: "ENVIRONMENT",
 	})
@@ -103,7 +103,6 @@ func routeRequests(splunkService SplunkServiceI, healthService *healthService, p
 
 	servicesRouter := mux.NewRouter()
 	servicesRouter.HandleFunc("/{contentType}/transactions", requestHandler.getTransactions).Methods("GET")
-	servicesRouter.HandleFunc("/{contentType}/transactions/{transactionId}", requestHandler.getTransactionsByID).Methods("GET")
 	servicesRouter.HandleFunc("/{contentType}/events", requestHandler.getLastEvent).Methods("GET")
 
 	var monitoringRouter http.Handler = servicesRouter

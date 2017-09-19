@@ -36,19 +36,19 @@ _How can I run it_
 
 Options:
 
-        --app-system-code="splunk-event-reader"            System Code of the application ($APP_SYSTEM_CODE)
-        --app-name="Splunk Event Reader"                   Application name ($APP_NAME)
-        --port="8080"                                           Port to listen on ($APP_PORT)
+      --app-system-code="splunk-event-reader"   System Code of the application ($APP_SYSTEM_CODE)
+      --app-name="Splunk Event Reader"          Application name ($APP_NAME)
+      --port="8080"                             Port to listen on ($APP_PORT)
+      --environment=""                          Name of the cluster ($ENVIRONMENT)
+      --splunk-user=""                          Splunk user name ($SPLUNK_USER)
+      --splunk-password=""                      Splunk password ($SPLUNK_PASSWORD)
+      --splunk-url=""                           Splunk URL ($SPLUNK_URL)
         
 3. Test:
 
-    1. Either using curl:
+    Using curl:
 
-            curl http://localhost:8080/people/143ba45c-2fb3-35bc-b227-a6ed80b5c517 | json_pp
-
-    1. Or using [httpie](https://github.com/jkbrzt/httpie):
-
-            http GET http://localhost:8080/people/143ba45c-2fb3-35bc-b227-a6ed80b5c517
+            curl http://localhost:8080/transactions | json_pp
 
 ## Build and deployment
 _How can I build and deploy it (lots of this will be links out as the steps will be common)_
@@ -62,21 +62,66 @@ _What are the endpoints offered by the service_
 e.g.
 ### GET
 
-Using curl:
+`/{contentType}/transactions?[interval={relativeTime}][&uuid={uuid}]`
 
-    curl http://localhost:8080/people/143ba45c-2fb3-35bc-b227-a6ed80b5c517 | json_pp`
+Returns a set of unclosed transactions in a given interval
+* contentType - type of content processed in the transactions to be returned. Currently only `annotations` are supported.
+* relativeTime - earliest time to search from, in minutes or seconds. Default is `10m`
+* uuid - filter transactions by uuid; supports multiple values
 
-Or using [httpie](https://github.com/jkbrzt/httpie):
+Response example:
+```
+[{
+    transaction_id: "tid_h3pfihmzqd",
+    uuid: "919b15c0-f5a9-4288-89c1-2c0420529a7a",
+    closed_txn: "0",
+    duration: "6",
+    eventcount: "7",
+    events: 
+    [
+        {
+        content_type: "",
+        environment: "pub-xp",
+        event: "Ingest",
+        level: "info",
+        monitoring_event: "true",
+        msg: "Successfully ingested",
+        platform: "up-coco",
+        service_name: "native-ingester-metadata",
+        @time: "2017-09-12T11:56:50.765463097Z",
+        transaction_id: "tid_h3pfihmzqd",
+        uuid: "919b15c0-f5a9-4288-89c1-2c0420529a7a"
+        },
+        {...}
+    ]
+},
+{...}]
+```
 
-    http GET http://localhost:8080/people/143ba45c-2fb3-35bc-b227-a6ed80b5c517
+`/{contentType}/events?lastEvent=true&[]interval={relativeTime}]`
 
-The expected response will contain information about the person, and the organisations they are connected to (via memberships).
+Returns the last `PublishEnd` event within the interval
 
-Based on the following [google doc](https://docs.google.com/document/d/1SC4Uskl-VD78y0lg5H2Gq56VCmM4OFHofZM-OvpsOFo/edit#heading=h.qjo76xuvpj83).
+* contentType - as above
+* relativeTime - earliest time to search from, in minutes or seconds. If not specified, search is performed on all time (this can be costly if there is no such event in he index)
 
-
-## Utility endpoints
-_Endpoints that are there for support or testing, e.g read endpoints on the writers_
+Response example:
+```
+{
+    content_type: "Annotations",
+    environment: "xp",
+    event: "PublishEnd",
+    isValid: "true",
+    level: "info",
+    monitoring_event: "true",
+    msg: "Transaction has finished%!(EXTRA []interface {}=[])",
+    platform: "up-coco",
+    service_name: "annotations-monitoring-service",
+    @time: "2017-09-13T08:27:34.051915987Z",
+    transaction_id: "tid_gkfnwqwybl",
+    uuid: "468b9400-97ff-11e7-a652-cde3f882dd7b"
+}
+```
 
 ## Healthchecks
 Admin endpoints are:
@@ -87,14 +132,10 @@ Admin endpoints are:
 
 `/__build-info`
 
-_These standard endpoints do not need to be specifically documented._
 
-_This section *should* however explain what checks are done to determine health and gtg status._
+These are the checks performed:
 
-There are several checks performed:
-
-_e.g._
-* Checks that a connection can be made to Neo4j, using the neo4j url supplied as a parameter in service startup.
+* Splunk availability check. This is actually cached for 1 minute based on the last Splunk API call result
 
 ## Other information
 _Anything else you want to add._
