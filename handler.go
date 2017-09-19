@@ -154,7 +154,7 @@ func (handler *requestHandler) getLastEvent(writer http.ResponseWriter, request 
 		writer.WriteHeader(http.StatusOK)
 		msg, _ := json.Marshal(*publishEvent)
 		writer.Write([]byte(msg))
-	case NoResultsError:
+	case ErrNoResults:
 		writer.WriteHeader(http.StatusNotFound)
 	default:
 		logrus.Error(err)

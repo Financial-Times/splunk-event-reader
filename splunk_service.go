@@ -13,6 +13,7 @@ import (
 	"regexp"
 	"strings"
 	"sync"
+	"time"
 )
 
 const (
@@ -21,9 +22,11 @@ const (
 	transactionsQueryTemplate = `search index=heroku source="http:upp" sourcetype="heroku:drain" monitoring_event=true (environment="%s" OR environment="pub-%s") (content_type="%s" OR content_type="") | fields * | transaction transaction_id | search event!="PublishEnd"`
 	latestEventQueryTemplate  = `search index=heroku source="http:upp" sourcetype="heroku:drain" monitoring_event=true (environment="%s" OR environment="pub-%s") (content_type="%s" OR content_type="") event="PublishEnd" | fields * | head 1`
 	healthcheckQuery          = `search index=_audit | head 1`
+	healthCachePeriod         = time.Minute
 )
 
-var NoResultsError = errors.New("No results")
+// ErrNoResults returned when the Splunk query yields no results
+var ErrNoResults = errors.New("No results")
 
 // SplunkServiceI Splunk based event reader service
 type SplunkServiceI interface {
@@ -44,6 +47,7 @@ type splunkService struct {
 	sync.RWMutex
 	HTTPClient *http.Client
 	Config     splunkAccessConfig
+	lastHealth healthStatus
 }
 
 type monitoringQuery struct {
@@ -173,7 +177,7 @@ func (service *splunkService) GetLastEvent(query monitoringQuery) (*publishEvent
 			}
 		}
 	}
-	return nil, NoResultsError
+	return nil, ErrNoResults
 }
 
 func (service *splunkService) doQuery(query string) ([]splunkRow, error) {
@@ -195,8 +199,10 @@ func (service *splunkService) doQuery(query string) ([]splunkRow, error) {
 
 	err = retry.Do(httpCall, retry.RetryChecker(func(e error) bool { return e != nil }), retry.MaxTries(2))
 	if err != nil {
+		service.lastHealth = healthStatus{message: "Splunk error", err: err, time: time.Now()}
 		return nil, err
 	}
+	service.lastHealth = healthStatus{message: "Splunk is ok", time: time.Now()}
 
 	var rows []splunkRow
 	decoder := json.NewDecoder(bufio.NewReader(resp.Body))
@@ -214,19 +220,15 @@ func (service *splunkService) doQuery(query string) ([]splunkRow, error) {
 }
 
 func (service *splunkService) IsHealthy() healthStatus {
+	if time.Now().Before(service.lastHealth.time.Add(healthCachePeriod)) {
+		return service.lastHealth
+	}
 	v := url.Values{}
 	v.Set("search", healthcheckQuery)
 	v.Set("earliest_time", "-10s")
 
-	rows, err := service.doQuery(v.Encode())
-	if err != nil {
-		return healthStatus{message: "Splunk error", err: err}
-
-	} else if rows == nil || len(rows) == 0 {
-		return healthStatus{message: "No results from Splunk", err: errors.New("no results from splunk")}
-
-	}
-	return healthStatus{message: "Splunk is ok"}
+	service.doQuery(v.Encode())
+	return service.lastHealth
 }
 
 func newSplunkService(config splunkAccessConfig) SplunkServiceI {

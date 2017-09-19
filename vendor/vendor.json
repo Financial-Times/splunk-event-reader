@@ -45,6 +45,12 @@
 			"revisionTime": "2017-02-07T18:34:08Z"
 		},
 		{
+			"checksumSHA1": "5pJ0FKl1ueYmWd6OwSNAxTt9rS4=",
+			"path": "github.com/giantswarm/retry-go",
+			"revision": "d78cea247d5e87d005ff7732f88bc52359afbe19",
+			"revisionTime": "2015-12-03T10:29:09Z"
+		},
+		{
 			"checksumSHA1": "g/V4qrXjUGG9B+e3hB+4NAYJ5Gs=",
 			"path": "github.com/gorilla/context",
 			"revision": "08b5f424b9271eedf6f9f0ce86cb9396ed337a42",
@@ -69,13 +75,19 @@
 			"revisionTime": "2016-11-23T22:54:47Z"
 		},
 		{
+			"checksumSHA1": "8S4DTF5nyldGBZ3FIJ9I0SrU9JM=",
+			"path": "github.com/juju/errgo",
+			"revision": "08cceb5d0b5331634b9826762a8fd53b29b86ad8",
+			"revisionTime": "2014-09-25T10:02:37Z"
+		},
+		{
 			"checksumSHA1": "KAzbLjI9MzW2tjfcAsK75lVRp6I=",
 			"path": "github.com/rcrowley/go-metrics",
 			"revision": "1f30fe9094a513ce4c700b9a54458bbb0c96996c",
 			"revisionTime": "2016-11-28T21:05:44Z"
 		},
 		{
-			"checksumSHA1": "ucHq4GfIs3tj/Ey6y7Ap6CMLhFs=",
+			"checksumSHA1": "zmC8/3V4ls53DJlNTKDZwPSC/dA=",
 			"path": "github.com/satori/go.uuid",
 			"revision": "5bf94b69c6b68ee1b541973bb8e1144db23a194b",
 			"revisionTime": "2017-03-21T23:07:31Z"
