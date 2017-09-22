@@ -1,0 +1,14 @@
+{
+  "content_type": "Annotations",
+  "environment": "xp",
+  "event": "PublishEnd",
+  "isValid": "true",
+  "level": "info",
+  "monitoring_event": "true",
+  "msg": "Transaction has finished",
+  "platform": "up-coco",
+  "service_name": "annotations-monitoring-service",
+  "@time": "2017-09-19T15:11:31.795334198Z",
+  "transaction_id": "tid_evjm9gls5a",
+  "uuid": "ed08f771-db28-4d63-b566-0d49c6595111"
+}

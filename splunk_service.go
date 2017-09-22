@@ -176,12 +176,11 @@ func (service *splunkService) GetLastEvent(query monitoringQuery) (*publishEvent
 }
 
 func (service *splunkService) doQuery(query string) ([]splunkRow, error) {
-
-	req, err := http.NewRequest("POST", service.Config.restURL+splunkEndpoint, strings.NewReader(query))
-	req.SetBasicAuth(service.Config.user, service.Config.password)
-
 	var resp *http.Response
 	httpCall := func() error {
+		req, err := http.NewRequest("POST", service.Config.restURL+splunkEndpoint, strings.NewReader(query))
+		req.SetBasicAuth(service.Config.user, service.Config.password)
+		req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 		resp, err = service.HTTPClient.Do(req)
 		if err != nil {
 			return err
@@ -192,7 +191,7 @@ func (service *splunkService) doQuery(query string) ([]splunkRow, error) {
 		return nil
 	}
 
-	err = retry.Do(httpCall, retry.RetryChecker(func(e error) bool { return e != nil }), retry.MaxTries(2))
+	err := retry.Do(httpCall, retry.RetryChecker(func(e error) bool { return e != nil }), retry.MaxTries(2))
 	if err != nil {
 		service.lastHealth = healthStatus{message: "Splunk error", err: err, time: time.Now()}
 		return nil, err
