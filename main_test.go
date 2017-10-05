@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	fthealth "github.com/Financial-Times/go-fthealth/v1_1"
 	"github.com/stretchr/testify/assert"
 	"io/ioutil"
 	"net/http"
@@ -91,7 +92,7 @@ func Test_GetGtg(t *testing.T) {
 		{url: "http://localhost:8080/__gtg", expectedStatus: http.StatusOK},
 		// health status is cached, so we need to force it to fail before
 		{url: "http://localhost:8080/annotations/transactions", flags: flags{error: true}, expectedStatus: http.StatusInternalServerError},
-		{url: "http://localhost:8080/__gtg", flags: flags{error: true}, expectedStatus: http.StatusServiceUnavailable},
+		{url: "http://localhost:8080/__gtg", expectedStatus: http.StatusServiceUnavailable},
 	}
 
 	for _, test := range tests {
@@ -102,6 +103,46 @@ func Test_GetGtg(t *testing.T) {
 		req, _ := http.NewRequest("GET", test.url, nil)
 		res, err := client.Do(req)
 		assert.NoError(t, err)
+
+		assert.Equal(t, test.expectedStatus, res.StatusCode)
+
+		testFlags = flags{}
+	}
+}
+
+func Test_Health(t *testing.T) {
+	tests := []struct {
+		url            string
+		expectedStatus int
+		expectedHealth bool
+		flags          flags
+	}{
+
+		{url: "http://localhost:8080/annotations/transactions", expectedStatus: http.StatusOK},
+		{url: "http://localhost:8080/__health", expectedStatus: http.StatusOK, expectedHealth: true},
+		// health status is cached, so we need to force it to fail before
+		{url: "http://localhost:8080/annotations/transactions", flags: flags{error: true}, expectedStatus: http.StatusInternalServerError},
+		{url: "http://localhost:8080/__health", expectedStatus: http.StatusOK, expectedHealth: false},
+	}
+
+	for _, test := range tests {
+		testFlags = test.flags
+
+		client := &http.Client{}
+
+		req, _ := http.NewRequest("GET", test.url, nil)
+		res, err := client.Do(req)
+		assert.NoError(t, err)
+
+		if test.url == "http://localhost:8080/__health" {
+			rBody := make([]byte, res.ContentLength)
+			res.Body.Read(rBody)
+			res.Body.Close()
+
+			health := fthealth.HealthResult{}
+			json.Unmarshal(rBody, &health)
+			assert.Equal(t, test.expectedHealth, health.Ok)
+		}
 
 		assert.Equal(t, test.expectedStatus, res.StatusCode)
 
