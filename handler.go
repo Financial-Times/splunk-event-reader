@@ -62,8 +62,13 @@ func (handler *requestHandler) getTransactions(writer http.ResponseWriter, reque
 	switch err {
 	case nil:
 		writer.WriteHeader(http.StatusOK)
-		msg, _ := json.Marshal(transactions)
-		writer.Write([]byte(msg))
+		msg, err := json.Marshal(transactions)
+		if err != nil {
+			logrus.Error(err)
+			writer.WriteHeader(http.StatusInternalServerError)
+		} else {
+			writer.Write([]byte(msg))
+		}
 	default:
 		logrus.Error(err)
 		writer.WriteHeader(http.StatusInternalServerError)
@@ -104,8 +109,13 @@ func (handler *requestHandler) getLastEvent(writer http.ResponseWriter, request 
 	switch err {
 	case nil:
 		writer.WriteHeader(http.StatusOK)
-		msg, _ := json.Marshal(*publishEvent)
-		writer.Write([]byte(msg))
+		msg, err := json.Marshal(*publishEvent)
+		if err != nil {
+			logrus.Error(err)
+			writer.WriteHeader(http.StatusInternalServerError)
+		} else {
+			writer.Write([]byte(msg))
+		}
 	case ErrNoResults:
 		writer.WriteHeader(http.StatusNotFound)
 	default:

@@ -27,6 +27,7 @@ const (
 
 // ErrNoResults returned when the Splunk query yields no results
 var ErrNoResults = errors.New("No results")
+var envRegex = regexp.MustCompile("-u[ks]]$")
 
 // SplunkServiceI Splunk based event reader service
 type SplunkServiceI interface {
@@ -84,8 +85,6 @@ type splunkTransactionEvent struct {
 }
 
 func (service *splunkService) GetTransactions(query monitoringQuery) ([]transactionEvent, error) {
-
-	envRegex := regexp.MustCompile("-u[ks]]$")
 	queryString := fmt.Sprintf(transactionsQueryTemplate, service.Config.environment, envRegex.ReplaceAllString(service.Config.environment, "*"), query.ContentType)
 
 	if len(query.UUIDs) > 0 {
@@ -144,8 +143,6 @@ func (service *splunkService) GetTransactions(query monitoringQuery) ([]transact
 }
 
 func (service *splunkService) GetLastEvent(query monitoringQuery) (*publishEvent, error) {
-
-	envRegex := regexp.MustCompile("-u[ks]]$")
 	queryString := fmt.Sprintf(latestEventQueryTemplate, service.Config.environment, envRegex.ReplaceAllString(service.Config.environment, "*"), query.ContentType)
 
 	v := url.Values{}
