@@ -4,7 +4,7 @@
     "uuid": "27355ee6-e280-4fb8-b825-8f14be1be9d3",
     "closed_txn": "0",
     "duration": "15.752",
-    "eventcount": "6",
+    "eventcount": 6,
     "events": [
       {
         "content_type": "",

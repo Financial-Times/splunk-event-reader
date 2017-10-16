@@ -19,8 +19,8 @@ import (
 const (
 	splunkEndpoint            = "/services/search/jobs/export?output_mode=json"
 	defaultEarliestTime       = "-10m"
-	transactionsQueryTemplate = `search index="%s" source="http:upp" sourcetype="upp" monitoring_event=true (environment="%s" OR environment="pub-%s") (content_type="%s" OR content_type="") | fields * | transaction transaction_id | search event!="PublishEnd"`
-	latestEventQueryTemplate  = `search index="%s" source="http:upp" sourcetype="upp" monitoring_event=true (environment="%s" OR environment="pub-%s") (content_type="%s" OR content_type="") event="PublishEnd" | fields * | head 1`
+	transactionsQueryTemplate = `search index="%s" source="http:upp" sourcetype="upp" monitoring_event=true (environment="%s" OR environment="pub-%s") (content_type="%s" OR content_type="") transaction_id!="SYNTHETIC*" transaction_id!="*carousel*"  | fields content_type, event, isValid, level, service_name, @time, transaction_id, uuid`
+	latestEventQueryTemplate  = `search index="%s" source="http:upp" sourcetype="upp" monitoring_event=true (environment="%s" OR environment="pub-%s") (content_type="%s" OR content_type="") event="PublishEnd" | fields content_type, event, isValid, level, service_name, @time, transaction_id, uuid | head 1`
 	healthcheckQuery          = `search index=_audit | head 1`
 	healthCachePeriod         = time.Minute
 )
@@ -80,11 +80,6 @@ type splunkPublishEvent struct {
 	publishEvent
 }
 
-type splunkTransactionEvent struct {
-	splunkBaseEvent
-	transactionEvent
-}
-
 func determineIndex(env string) interface{} {
 	index := env
 
@@ -119,41 +114,60 @@ func (service *splunkService) GetTransactions(query monitoringQuery) ([]transact
 		v.Set("earliest_time", defaultEarliestTime)
 	}
 
+	start := time.Now()
+	fmt.Printf("Start: %v\n", start)
 	rows, err := service.doQuery(v.Encode())
+	end := time.Now()
+	fmt.Printf("End: %v\n", end)
+	fmt.Printf("Took: %vns\n", end.UnixNano()-start.UnixNano())
+
 	if err != nil {
 		return nil, err
 	}
 
 	transactions := []transactionEvent{}
+
+	txMap := make(map[string]*transactionEvent)
 	for _, row := range rows {
-		splunkTransaction := splunkTransactionEvent{}
 		if row.Result != nil && len(*row.Result) > 0 {
-			err = json.Unmarshal(*row.Result, &splunkTransaction)
+			splunkEvent := splunkPublishEvent{}
+
+			err = json.Unmarshal(*row.Result, &splunkEvent)
+			if err == io.EOF {
+				break
+			}
 			if err != nil {
 				return nil, err
 			}
-			if err == nil {
-				events := []publishEvent{}
-				decoder := json.NewDecoder(strings.NewReader(splunkTransaction.Raw))
-				for {
-					event := publishEvent{}
-					err = decoder.Decode(&event)
-					if err == io.EOF {
-						break
-					}
-					if err != nil {
-						return nil, err
-					}
-					if err == nil {
-						events = append(events, event)
-					}
-				}
-				transaction := splunkTransaction.transactionEvent
-				transaction.Events = events
-				transactions = append(transactions, transaction)
+
+			event := splunkEvent.publishEvent
+
+			transaction := txMap[event.TransactionID]
+
+			if transaction == nil {
+				transaction = &transactionEvent{}
+				transaction.TransactionID = event.TransactionID
+				transaction.ClosedTxn = "0"
+				txMap[event.TransactionID] = transaction
+			}
+			if event.UUID != "" {
+				transaction.UUID = event.UUID
+			}
+
+			transaction.Events = append(transaction.Events, event)
+			transaction.EventCount++
+			if event.Event == "PublishEnd" {
+				transaction.ClosedTxn = "1"
 			}
 		}
 	}
+
+	for _, transaction := range txMap {
+		if transaction.ClosedTxn != "1" {
+			transactions = append(transactions, *transaction)
+		}
+	}
+
 	return transactions, nil
 }
 

@@ -19,7 +19,6 @@ type transactionEvent struct {
 	TransactionID string         `json:"transaction_id"`
 	UUID          string         `json:"uuid"`
 	ClosedTxn     string         `json:"closed_txn"`
-	Duration      string         `json:"duration"`
-	EventCount    string         `json:"eventcount"`
+	EventCount    int            `json:"eventcount"`
 	Events        []publishEvent `json:"events"`
 }

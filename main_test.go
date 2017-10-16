@@ -30,12 +30,12 @@ func TestMain(m *testing.M) {
 		} else {
 			w.WriteHeader(http.StatusOK)
 			var inputFile string
-			if strings.Contains(r.PostForm.Get("search"), "transaction transaction_id") {
-				inputFile = "testdata/splunk_response_sample.json"
-			} else if strings.Contains(r.PostForm.Get("search"), "audit") {
-				inputFile = "testdata/splunk_audit_response.json"
-			} else {
+			if strings.Contains(r.PostForm.Get("search"), "audit") {
 				inputFile = "testdata/splunk_publish_end_sample.json"
+			} else if strings.Contains(r.PostForm.Get("search"), "head 1") {
+				inputFile = "testdata/splunk_publish_end_sample.json"
+			} else {
+				inputFile = "testdata/splunk_response_sample.json"
 			}
 			inputJSON, _ := ioutil.ReadFile(inputFile)
 			if !testFlags.noResults {

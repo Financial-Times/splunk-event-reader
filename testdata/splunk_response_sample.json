@@ -1,156 +1,137 @@
 {
   "preview": false,
-  "offset": 6,
+  "offset": 0,
   "result": {
-    "@time": [
-      "2017-09-19T13:59:48.248989749Z",
-      "2017-09-19T13:59:53.443287108Z",
-      "2017-09-19T13:59:53.44657054Z",
-      "2017-09-19T13:59:58.442130319Z",
-      "2017-09-19T14:00:03Z",
-      "2017-09-19T14:00:04Z"
-    ],
-    "HOSTNAME": [
-      "ip-172-27-0-0.eu-west-1.compute.internal",
-      "ip-172-27-0-34.eu-west-1.compute.internal",
-      "ip-172-27-0-194.eu-west-1.compute.internal",
-      "ip-172-27-0-159.eu-west-1.compute.internal",
-      "ip-172-27-0-68.eu-west-1.compute.internal"
-    ],
-    "MACHINE_ID": [
-      "270cce4a562f4e5a270cce4a562f4e5a",
-      "6550b6d5b6f84f896550b6d5b6f84f89",
-      "bc2626fa8e0b4c16bc2626fa8e0b4c16",
-      "ce564685494d4c6ace564685494d4c6a",
-      "f064489d498342d0f064489d498342d0"
-    ],
-    "MESSAGE": [
-      "{\"@time\":\"2017-09-19T13:59:48.248989749Z\",\"content_type\":\"\",\"event\":\"Forwarding\",\"level\":\"info\",\"monitoring_event\":\"true\",\"msg\":\"Message has been forwarded\",\"service_name\":\"cms-kafka-bridge-pub-prod\",\"transaction_id\":\"tid_hamoil09hg\"}",
-      "{\"@time\":\"2017-09-19T13:59:53.443287108Z\",\"content_type\":\"\",\"event\":\"NativeSave\",\"level\":\"info\",\"monitoring_event\":\"true\",\"msg\":\"Successfully saved\",\"service_name\":\"nativerw\",\"transaction_id\":\"tid_hamoil09hg\",\"uuid\":\"27355ee6-e280-4fb8-b825-8f14be1be9d3\"}",
-      "{\"@time\":\"2017-09-19T13:59:53.44657054Z\",\"content_type\":\"\",\"event\":\"Ingest\",\"level\":\"info\",\"monitoring_event\":\"true\",\"msg\":\"Successfully ingested\",\"service_name\":\"native-ingester-cms\",\"transaction_id\":\"tid_hamoil09hg\",\"uuid\":\"27355ee6-e280-4fb8-b825-8f14be1be9d3\"}",
-      "{\"@time\":\"2017-09-19T13:59:58.442130319Z\",\"content_type\":\"\",\"event\":\"Forwarding\",\"level\":\"info\",\"monitoring_event\":\"true\",\"msg\":\"Message has been forwarded\",\"service_name\":\"cms-kafka-bridge-pub-xp\",\"transaction_id\":\"tid_hamoil09hg\"}",
-      "{\"@time\":\"2017-09-19T14:00:03Z\",\"content_type\":\"\",\"event\":\"Combine\",\"level\":\"info\",\"monitoring_event\":\"true\",\"msg\":\"Successfully combined\",\"service_name\":\"post-publication-combiner\",\"transaction_id\":\"tid_hamoil09hg\",\"uuid\":\"27355ee6-e280-4fb8-b825-8f14be1be9d3\"}",
-      "{\"@time\":\"2017-09-19T14:00:04Z\",\"content_type\":\"\",\"event\":\"ContentWriteElasticsearch\",\"level\":\"info\",\"monitoring_event\":\"true\",\"msg\":\"Successfully saved\",\"service_name\":\"content-rw-elasticsearch\",\"transaction_id\":\"tid_hamoil09hg\",\"uuid\":\"27355ee6-e280-4fb8-b825-8f14be1be9d3\"}"
-    ],
-    "SYSTEMD_INVOCATION_ID": [
-      "0934475603214f1e0934475603214f1e",
-      "104b317b1ebb4ec0104b317b1ebb4ec0",
-      "5ab1560d641745705ab1560d64174570",
-      "5d0e929c031e4d805d0e929c031e4d80",
-      "7401fc1f446d447b7401fc1f446d447b",
-      "79c2e5bc58a846fd79c2e5bc58a846fd"
-    ],
-    "SYSTEMD_UNIT": [
-      "cms-kafka-bridge-pub-prod@2.service",
-      "cms-kafka-bridge-pub-xp@2.service",
-      "content-rw-elasticsearch@2.service",
-      "native-ingester-cms@1.service",
-      "nativerw@1.service",
-      "post-publication-combiner@1.service"
-    ],
-    "active_cluster": "true",
-    "category": "has",
-    "closed_txn": "0",
-    "component": "been",
+    "@time": "2017-09-19T13:59:48.248989749Z",
+    "HOSTNAME": "ip-172-27-0-34.eu-west-1.compute.internal",
+    "MACHINE_ID": "bc2626fa8e0b4c16bc2626fa8e0b4c16",
+    "MESSAGE": "{\"@time\":\"2017-09-19T13:59:48.248989749Z\",\"content_type\":\"\",\"event\":\"Forwarding\",\"level\":\"info\",\"monitoring_event\":\"true\",\"msg\":\"Message has been forwarded\",\"service_name\":\"cms-kafka-bridge-pub-prod\",\"transaction_id\":\"tid_hamoil09hg\"}",
+    "SYSTEMD_UNIT": "cms-kafka-bridge-pub-prod@2.service",
+    "_SYSTEMD_INVOCATION_ID": "5d0e929c031e4d805d0e929c031e4d80",
+    "active_cluster": true,
     "content_type": "",
-    "duration": "15.752",
-    "environment": [
-      "pub-xp",
-      "xp"
-    ],
-    "event": [
-      "Combine",
-      "ContentWriteElasticsearch",
-      "Forwarding",
-      "Ingest",
-      "NativeSave"
-    ],
-    "eventcount": "6",
-    "field_match_sum": "6",
-    "host": "http-inputs-acme.splunkcloud.com",
-    "index": "heroku",
+    "environment": "pub-xp",
+    "event": "Forwarding",
     "level": "info",
-    "linecount": "12",
     "monitoring_event": "true",
-    "msg": [
-      "Message has been forwarded",
-      "Successfully combined",
-      "Successfully ingested",
-      "Successfully saved"
-    ],
+    "msg": "Message has been forwarded",
     "platform": "up-coco",
-    "punct": [
-      "{\"@\":\"--::\",\"\":\"----.--..\",\"\":\"\",\"\":\"{\\\"@\\\":\\\"--::",
-      "{\"@\":\"--::.\",\"\":\"----.--..\",\"\":\"\",\"\":\"{\\\"@\\\":\\\"--:"
-    ],
-    "service_name": [
-      "cms-kafka-bridge-pub-prod",
-      "cms-kafka-bridge-pub-xp",
-      "content-rw-elasticsearch",
-      "native-ingester-cms",
-      "nativerw",
-      "post-publication-combiner"
-    ],
-    "source": "http:upp",
-    "sourcetype": "heroku:drain",
-    "splunk_server": [
-      "idx1.acme.splunkcloud.com",
-      "idx3.acme.splunkcloud.com",
-      "idx5.acme.splunkcloud.com",
-      "idx6.acme.splunkcloud.com"
-    ],
-    "transaction_id": "tid_hamoil09hg",
-    "uuid": "27355ee6-e280-4fb8-b825-8f14be1be9d3",
-    "_bkt": [
-      "heroku~148~C64388F7-2F24-45AF-B396-91607712AB87",
-      "heroku~608~1B4B0544-EC29-48B6-B99F-F324FD86D5AC",
-      "heroku~614~5AC1AC10-BC1F-4FC6-A449-A265A6195E23",
-      "heroku~85~0AD706E5-A282-4C3B-9D0A-DAE0D1D646B7"
-    ],
-    "_cd": [
-      "148:30474562",
-      "148:30501805",
-      "148:30537572",
-      "608:31312816",
-      "614:31748937",
-      "85:30891911"
-    ],
-    "_eventtype_color": [
-      "NULL",
-      "NULL",
-      "NULL",
-      "NULL",
-      "NULL",
-      "NULL"
-    ],
-    "_indextime": [
-      "1505829589",
-      "1505829593",
-      "1505829598",
-      "1505829603",
-      "1505829605"
-    ],
-    "_raw": "{\"@time\":\"2017-09-19T13:59:48.248989749Z\",\"HOSTNAME\":\"ip-172-27-0-34.eu-west-1.compute.internal\",\"MACHINE_ID\":\"bc2626fa8e0b4c16bc2626fa8e0b4c16\",\"MESSAGE\":\"{\\\"@time\\\":\\\"2017-09-19T13:59:48.248989749Z\\\",\\\"content_type\\\":\\\"\\\",\\\"event\\\":\\\"Forwarding\\\",\\\"level\\\":\\\"info\\\",\\\"monitoring_event\\\":\\\"true\\\",\\\"msg\\\":\\\"Message has been forwarded\\\",\\\"service_name\\\":\\\"cms-kafka-bridge-pub-prod\\\",\\\"transaction_id\\\":\\\"tid_hamoil09hg\\\"}\",\"SYSTEMD_UNIT\":\"cms-kafka-bridge-pub-prod@2.service\",\"_SYSTEMD_INVOCATION_ID\":\"5d0e929c031e4d805d0e929c031e4d80\",\"active_cluster\":true,\"content_type\":\"\",\"environment\":\"pub-xp\",\"event\":\"Forwarding\",\"level\":\"info\",\"monitoring_event\":\"true\",\"msg\":\"Message has been forwarded\",\"platform\":\"up-coco\",\"service_name\":\"cms-kafka-bridge-pub-prod\",\"transaction_id\":\"tid_hamoil09hg\"}\n\n{\"@time\":\"2017-09-19T13:59:53.443287108Z\",\"HOSTNAME\":\"ip-172-27-0-159.eu-west-1.compute.internal\",\"MACHINE_ID\":\"270cce4a562f4e5a270cce4a562f4e5a\",\"MESSAGE\":\"{\\\"@time\\\":\\\"2017-09-19T13:59:53.443287108Z\\\",\\\"content_type\\\":\\\"\\\",\\\"event\\\":\\\"NativeSave\\\",\\\"level\\\":\\\"info\\\",\\\"monitoring_event\\\":\\\"true\\\",\\\"msg\\\":\\\"Successfully saved\\\",\\\"service_name\\\":\\\"nativerw\\\",\\\"transaction_id\\\":\\\"tid_hamoil09hg\\\",\\\"uuid\\\":\\\"27355ee6-e280-4fb8-b825-8f14be1be9d3\\\"}\",\"SYSTEMD_UNIT\":\"nativerw@1.service\",\"_SYSTEMD_INVOCATION_ID\":\"104b317b1ebb4ec0104b317b1ebb4ec0\",\"active_cluster\":true,\"content_type\":\"\",\"environment\":\"pub-xp\",\"event\":\"NativeSave\",\"level\":\"info\",\"monitoring_event\":\"true\",\"msg\":\"Successfully saved\",\"platform\":\"up-coco\",\"service_name\":\"nativerw\",\"transaction_id\":\"tid_hamoil09hg\",\"uuid\":\"27355ee6-e280-4fb8-b825-8f14be1be9d3\"}\n\n{\"@time\":\"2017-09-19T13:59:53.44657054Z\",\"HOSTNAME\":\"ip-172-27-0-159.eu-west-1.compute.internal\",\"MACHINE_ID\":\"270cce4a562f4e5a270cce4a562f4e5a\",\"MESSAGE\":\"{\\\"@time\\\":\\\"2017-09-19T13:59:53.44657054Z\\\",\\\"content_type\\\":\\\"\\\",\\\"event\\\":\\\"Ingest\\\",\\\"level\\\":\\\"info\\\",\\\"monitoring_event\\\":\\\"true\\\",\\\"msg\\\":\\\"Successfully ingested\\\",\\\"service_name\\\":\\\"native-ingester-cms\\\",\\\"transaction_id\\\":\\\"tid_hamoil09hg\\\",\\\"uuid\\\":\\\"27355ee6-e280-4fb8-b825-8f14be1be9d3\\\"}\",\"SYSTEMD_UNIT\":\"native-ingester-cms@1.service\",\"_SYSTEMD_INVOCATION_ID\":\"7401fc1f446d447b7401fc1f446d447b\",\"active_cluster\":true,\"content_type\":\"\",\"environment\":\"pub-xp\",\"event\":\"Ingest\",\"level\":\"info\",\"monitoring_event\":\"true\",\"msg\":\"Successfully ingested\",\"platform\":\"up-coco\",\"service_name\":\"native-ingester-cms\",\"transaction_id\":\"tid_hamoil09hg\",\"uuid\":\"27355ee6-e280-4fb8-b825-8f14be1be9d3\"}\n\n{\"@time\":\"2017-09-19T13:59:58.442130319Z\",\"HOSTNAME\":\"ip-172-27-0-194.eu-west-1.compute.internal\",\"MACHINE_ID\":\"f064489d498342d0f064489d498342d0\",\"MESSAGE\":\"{\\\"@time\\\":\\\"2017-09-19T13:59:58.442130319Z\\\",\\\"content_type\\\":\\\"\\\",\\\"event\\\":\\\"Forwarding\\\",\\\"level\\\":\\\"info\\\",\\\"monitoring_event\\\":\\\"true\\\",\\\"msg\\\":\\\"Message has been forwarded\\\",\\\"service_name\\\":\\\"cms-kafka-bridge-pub-xp\\\",\\\"transaction_id\\\":\\\"tid_hamoil09hg\\\"}\",\"SYSTEMD_UNIT\":\"cms-kafka-bridge-pub-xp@2.service\",\"_SYSTEMD_INVOCATION_ID\":\"79c2e5bc58a846fd79c2e5bc58a846fd\",\"active_cluster\":true,\"content_type\":\"\",\"environment\":\"xp\",\"event\":\"Forwarding\",\"level\":\"info\",\"monitoring_event\":\"true\",\"msg\":\"Message has been forwarded\",\"platform\":\"up-coco\",\"service_name\":\"cms-kafka-bridge-pub-xp\",\"transaction_id\":\"tid_hamoil09hg\"}\n\n{\"@time\":\"2017-09-19T14:00:03Z\",\"HOSTNAME\":\"ip-172-27-0-0.eu-west-1.compute.internal\",\"MACHINE_ID\":\"ce564685494d4c6ace564685494d4c6a\",\"MESSAGE\":\"{\\\"@time\\\":\\\"2017-09-19T14:00:03Z\\\",\\\"content_type\\\":\\\"\\\",\\\"event\\\":\\\"Combine\\\",\\\"level\\\":\\\"info\\\",\\\"monitoring_event\\\":\\\"true\\\",\\\"msg\\\":\\\"Successfully combined\\\",\\\"service_name\\\":\\\"post-publication-combiner\\\",\\\"transaction_id\\\":\\\"tid_hamoil09hg\\\",\\\"uuid\\\":\\\"27355ee6-e280-4fb8-b825-8f14be1be9d3\\\"}\",\"SYSTEMD_UNIT\":\"post-publication-combiner@1.service\",\"_SYSTEMD_INVOCATION_ID\":\"5ab1560d641745705ab1560d64174570\",\"active_cluster\":true,\"content_type\":\"\",\"environment\":\"xp\",\"event\":\"Combine\",\"level\":\"info\",\"monitoring_event\":\"true\",\"msg\":\"Successfully combined\",\"platform\":\"up-coco\",\"service_name\":\"post-publication-combiner\",\"transaction_id\":\"tid_hamoil09hg\",\"uuid\":\"27355ee6-e280-4fb8-b825-8f14be1be9d3\"}\n\n{\"@time\":\"2017-09-19T14:00:04Z\",\"HOSTNAME\":\"ip-172-27-0-68.eu-west-1.compute.internal\",\"MACHINE_ID\":\"6550b6d5b6f84f896550b6d5b6f84f89\",\"MESSAGE\":\"{\\\"@time\\\":\\\"2017-09-19T14:00:04Z\\\",\\\"content_type\\\":\\\"\\\",\\\"event\\\":\\\"ContentWriteElasticsearch\\\",\\\"level\\\":\\\"info\\\",\\\"monitoring_event\\\":\\\"true\\\",\\\"msg\\\":\\\"Successfully saved\\\",\\\"service_name\\\":\\\"content-rw-elasticsearch\\\",\\\"transaction_id\\\":\\\"tid_hamoil09hg\\\",\\\"uuid\\\":\\\"27355ee6-e280-4fb8-b825-8f14be1be9d3\\\"}\",\"SYSTEMD_UNIT\":\"content-rw-elasticsearch@2.service\",\"_SYSTEMD_INVOCATION_ID\":\"0934475603214f1e0934475603214f1e\",\"active_cluster\":true,\"content_type\":\"\",\"environment\":\"xp\",\"event\":\"ContentWriteElasticsearch\",\"level\":\"info\",\"monitoring_event\":\"true\",\"msg\":\"Successfully saved\",\"platform\":\"up-coco\",\"service_name\":\"content-rw-elasticsearch\",\"transaction_id\":\"tid_hamoil09hg\",\"uuid\":\"27355ee6-e280-4fb8-b825-8f14be1be9d3\"}\n",
-    "_serial": [
-      "0",
-      "1",
-      "3",
-      "5"
-    ],
-    "_si": [
-      "heroku",
-      "idx1.acme.splunkcloud.com",
-      "idx3.acme.splunkcloud.com",
-      "idx5.acme.splunkcloud.com",
-      "idx6.acme.splunkcloud.com"
-    ],
-    "_sourcetype": "heroku:drain",
-    "_subsecond": [
-      ".248",
-      ".442",
-      ".443",
-      ".446"
-    ],
-    "_time": "2017-09-19 06:59:48.248 PDT"
+    "service_name": "cms-kafka-bridge-pub-prod",
+    "transaction_id": "tid_hamoil09hg"
   }
-} 
+}
+{
+  "preview": false,
+  "offset": 0,
+  "result": {
+    "@time": "2017-09-19T13:59:53.443287108Z",
+    "HOSTNAME": "ip-172-27-0-159.eu-west-1.compute.internal",
+    "MACHINE_ID": "270cce4a562f4e5a270cce4a562f4e5a",
+    "MESSAGE": "{\"@time\":\"2017-09-19T13:59:53.443287108Z\",\"content_type\":\"\",\"event\":\"NativeSave\",\"level\":\"info\",\"monitoring_event\":\"true\",\"msg\":\"Successfully saved\",\"service_name\":\"nativerw\",\"transaction_id\":\"tid_hamoil09hg\",\"uuid\":\"27355ee6-e280-4fb8-b825-8f14be1be9d3\"}",
+    "SYSTEMD_UNIT": "nativerw@1.service",
+    "_SYSTEMD_INVOCATION_ID": "104b317b1ebb4ec0104b317b1ebb4ec0",
+    "active_cluster": true,
+    "content_type": "",
+    "environment": "pub-xp",
+    "event": "NativeSave",
+    "level": "info",
+    "monitoring_event": "true",
+    "msg": "Successfully saved",
+    "platform": "up-coco",
+    "service_name": "nativerw",
+    "transaction_id": "tid_hamoil09hg",
+    "uuid": "27355ee6-e280-4fb8-b825-8f14be1be9d3"
+  }
+}
+{
+  "preview": false,
+  "offset": 0,
+  "result": {
+    "@time": "2017-09-19T13:59:53.44657054Z",
+    "HOSTNAME": "ip-172-27-0-159.eu-west-1.compute.internal",
+    "MACHINE_ID": "270cce4a562f4e5a270cce4a562f4e5a",
+    "MESSAGE": "{\"@time\":\"2017-09-19T13:59:53.44657054Z\",\"content_type\":\"\",\"event\":\"Ingest\",\"level\":\"info\",\"monitoring_event\":\"true\",\"msg\":\"Successfully ingested\",\"service_name\":\"native-ingester-cms\",\"transaction_id\":\"tid_hamoil09hg\",\"uuid\":\"27355ee6-e280-4fb8-b825-8f14be1be9d3\"}",
+    "SYSTEMD_UNIT": "native-ingester-cms@1.service",
+    "_SYSTEMD_INVOCATION_ID": "7401fc1f446d447b7401fc1f446d447b",
+    "active_cluster": true,
+    "content_type": "",
+    "environment": "pub-xp",
+    "event": "Ingest",
+    "level": "info",
+    "monitoring_event": "true",
+    "msg": "Successfully ingested",
+    "platform": "up-coco",
+    "service_name": "native-ingester-cms",
+    "transaction_id": "tid_hamoil09hg",
+    "uuid": "27355ee6-e280-4fb8-b825-8f14be1be9d3"
+  }
+}
+{
+  "preview": false,
+  "offset": 0,
+  "result": {
+    "@time": "2017-09-19T13:59:58.442130319Z",
+    "HOSTNAME": "ip-172-27-0-194.eu-west-1.compute.internal",
+    "MACHINE_ID": "f064489d498342d0f064489d498342d0",
+    "MESSAGE": "{\"@time\":\"2017-09-19T13:59:58.442130319Z\",\"content_type\":\"\",\"event\":\"Forwarding\",\"level\":\"info\",\"monitoring_event\":\"true\",\"msg\":\"Message has been forwarded\",\"service_name\":\"cms-kafka-bridge-pub-xp\",\"transaction_id\":\"tid_hamoil09hg\"}",
+    "SYSTEMD_UNIT": "cms-kafka-bridge-pub-xp@2.service",
+    "_SYSTEMD_INVOCATION_ID": "79c2e5bc58a846fd79c2e5bc58a846fd",
+    "active_cluster": true,
+    "content_type": "",
+    "environment": "xp",
+    "event": "Forwarding",
+    "level": "info",
+    "monitoring_event": "true",
+    "msg": "Message has been forwarded",
+    "platform": "up-coco",
+    "service_name": "cms-kafka-bridge-pub-xp",
+    "transaction_id": "tid_hamoil09hg"
+  }
+}
+{
+  "preview": false,
+  "offset": 0,
+  "result": {
+    "@time": "2017-09-19T14:00:03Z",
+    "HOSTNAME": "ip-172-27-0-0.eu-west-1.compute.internal",
+    "MACHINE_ID": "ce564685494d4c6ace564685494d4c6a",
+    "MESSAGE": "{\"@time\":\"2017-09-19T14:00:03Z\",\"content_type\":\"\",\"event\":\"Combine\",\"level\":\"info\",\"monitoring_event\":\"true\",\"msg\":\"Successfully combined\",\"service_name\":\"post-publication-combiner\",\"transaction_id\":\"tid_hamoil09hg\",\"uuid\":\"27355ee6-e280-4fb8-b825-8f14be1be9d3\"}",
+    "SYSTEMD_UNIT": "post-publication-combiner@1.service",
+    "_SYSTEMD_INVOCATION_ID": "5ab1560d641745705ab1560d64174570",
+    "active_cluster": true,
+    "content_type": "",
+    "environment": "xp",
+    "event": "Combine",
+    "level": "info",
+    "monitoring_event": "true",
+    "msg": "Successfully combined",
+    "platform": "up-coco",
+    "service_name": "post-publication-combiner",
+    "transaction_id": "tid_hamoil09hg",
+    "uuid": "27355ee6-e280-4fb8-b825-8f14be1be9d3"
+  }
+}
+{
+  "preview": false,
+  "offset": 0,
+  "lastrow": true,
+  "result": {
+    "@time": "2017-09-19T14:00:04Z",
+    "HOSTNAME": "ip-172-27-0-68.eu-west-1.compute.internal",
+    "MACHINE_ID": "6550b6d5b6f84f896550b6d5b6f84f89",
+    "MESSAGE": "{\"@time\":\"2017-09-19T14:00:04Z\",\"content_type\":\"\",\"event\":\"ContentWriteElasticsearch\",\"level\":\"info\",\"monitoring_event\":\"true\",\"msg\":\"Successfully saved\",\"service_name\":\"content-rw-elasticsearch\",\"transaction_id\":\"tid_hamoil09hg\",\"uuid\":\"27355ee6-e280-4fb8-b825-8f14be1be9d3\"}",
+    "SYSTEMD_UNIT": "content-rw-elasticsearch@2.service",
+    "_SYSTEMD_INVOCATION_ID": "0934475603214f1e0934475603214f1e",
+    "active_cluster": true,
+    "content_type": "",
+    "environment": "xp",
+    "event": "ContentWriteElasticsearch",
+    "level": "info",
+    "monitoring_event": "true",
+    "msg": "Successfully saved",
+    "platform": "up-coco",
+    "service_name": "content-rw-elasticsearch",
+    "transaction_id": "tid_hamoil09hg",
+    "uuid": "27355ee6-e280-4fb8-b825-8f14be1be9d3"
+  }
+}
