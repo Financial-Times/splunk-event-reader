@@ -156,6 +156,9 @@ func (service *splunkService) GetTransactions(query monitoringQuery) ([]transact
 
 			transaction.Events = append(transaction.Events, event)
 			transaction.EventCount++
+			if event.Event == "PublishStart" {
+				transaction.StartTime = event.Time
+			}
 			if event.Event == "PublishEnd" {
 				transaction.ClosedTxn = "1"
 			}

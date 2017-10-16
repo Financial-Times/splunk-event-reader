@@ -21,4 +21,5 @@ type transactionEvent struct {
 	ClosedTxn     string         `json:"closed_txn"`
 	EventCount    int            `json:"eventcount"`
 	Events        []publishEvent `json:"events"`
+	StartTime     string         `json:"start_time"`
 }
