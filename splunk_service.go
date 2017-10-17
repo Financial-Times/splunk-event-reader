@@ -114,12 +114,7 @@ func (service *splunkService) GetTransactions(query monitoringQuery) ([]transact
 		v.Set("earliest_time", defaultEarliestTime)
 	}
 
-	start := time.Now()
-	fmt.Printf("Start: %v\n", start)
 	rows, err := service.doQuery(v.Encode())
-	end := time.Now()
-	fmt.Printf("End: %v\n", end)
-	fmt.Printf("Took: %vns\n", end.UnixNano()-start.UnixNano())
 
 	if err != nil {
 		return nil, err
