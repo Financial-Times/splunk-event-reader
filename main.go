@@ -10,7 +10,6 @@ import (
 	health "github.com/Financial-Times/go-fthealth/v1_1"
 	"github.com/Financial-Times/http-handlers-go/httphandlers"
 	status "github.com/Financial-Times/service-status-go/httphandlers"
-	"github.com/Sirupsen/logrus"
 	log "github.com/Sirupsen/logrus"
 	"github.com/gorilla/mux"
 	"github.com/jawher/mow.cli"
@@ -102,7 +101,7 @@ func routeRequests(splunkService SplunkServiceI, healthService *healthService, p
 	servicesRouter.HandleFunc("/{contentType}/events", requestHandler.getLastEvent).Methods("GET")
 
 	var monitoringRouter http.Handler = servicesRouter
-	monitoringRouter = httphandlers.TransactionAwareRequestLoggingHandler(logrus.StandardLogger(), monitoringRouter)
+	monitoringRouter = httphandlers.TransactionAwareRequestLoggingHandler(log.StandardLogger(), monitoringRouter)
 	monitoringRouter = httphandlers.HTTPMetricsHandler(metrics.DefaultRegistry, monitoringRouter)
 
 	serveMux.Handle("/", monitoringRouter)
@@ -114,16 +113,16 @@ func routeRequests(splunkService SplunkServiceI, healthService *healthService, p
 	wg.Add(1)
 	go func() {
 		if err := server.ListenAndServe(); err != nil {
-			logrus.Infof("HTTP server closing with message: %v", err)
+			log.Infof("HTTP server closing with message: %v", err)
 		}
 		wg.Done()
 	}()
 
 	waitForSignal()
-	logrus.Infof("[Shutdown] SplunkEventReader is shutting down")
+	log.Infof("[Shutdown] SplunkEventReader is shutting down")
 
 	if err := server.Close(); err != nil {
-		logrus.Errorf("Unable to stop http server: %v", err)
+		log.Errorf("Unable to stop http server: %v", err)
 	}
 
 	wg.Wait()

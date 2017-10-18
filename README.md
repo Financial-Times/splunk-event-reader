@@ -66,18 +66,15 @@ Response example:
     transaction_id: "tid_h3pfihmzqd",
     uuid: "919b15c0-f5a9-4288-89c1-2c0420529a7a",
     closed_txn: "0",
-    duration: "6",
+    start_time: "2017-09-12T11:56:50.765463097Z",
     eventcount: "7",
     events: 
     [
         {
         content_type: "",
-        environment: "pub-xp",
         event: "Ingest",
         level: "info",
         monitoring_event: "true",
-        msg: "Successfully ingested",
-        platform: "up-coco",
         service_name: "native-ingester-metadata",
         @time: "2017-09-12T11:56:50.765463097Z",
         transaction_id: "tid_h3pfihmzqd",
@@ -101,13 +98,10 @@ Response example:
 ```
 {
     content_type: "Annotations",
-    environment: "xp",
     event: "PublishEnd",
     isValid: "true",
     level: "info",
     monitoring_event: "true",
-    msg: "Transaction has finished%!(EXTRA []interface {}=[])",
-    platform: "up-coco",
     service_name: "annotations-monitoring-service",
     @time: "2017-09-13T08:27:34.051915987Z",
     transaction_id: "tid_gkfnwqwybl",
@@ -137,6 +131,4 @@ As Splunk requests may fail due to these (or other) limitation, a retry mechanis
 ### Logging
 
 * The application uses [logrus](https://github.com/Sirupsen/logrus); the log file is initialised in [main.go](main.go).
-* Logging requires an `env` app parameter, for all environments other than `local` logs are written to file.
-* When running locally, logs are written to console. If you want to log locally to file, you need to pass in an env parameter that is != `local`.
-* NOTE: `/__build-info` and `/__gtg` endpoints are not logged as they are called every second from varnish/vulcand and this information is not needed in logs/splunk.
+* NOTE: `/__build-info` and `/__gtg` endpoints are not logged as they are called every second and this information is not needed in logs/splunk.
