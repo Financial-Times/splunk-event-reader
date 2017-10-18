@@ -3,8 +3,6 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	fthealth "github.com/Financial-Times/go-fthealth/v1_1"
-	"github.com/stretchr/testify/assert"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
@@ -12,6 +10,9 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	fthealth "github.com/Financial-Times/go-fthealth/v1_1"
+	"github.com/stretchr/testify/assert"
 )
 
 type flags struct {

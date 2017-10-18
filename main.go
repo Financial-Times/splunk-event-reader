@@ -1,6 +1,12 @@
 package main
 
 import (
+	"net/http"
+	"os"
+	"os/signal"
+	"sync"
+	"syscall"
+
 	health "github.com/Financial-Times/go-fthealth/v1_1"
 	"github.com/Financial-Times/http-handlers-go/httphandlers"
 	status "github.com/Financial-Times/service-status-go/httphandlers"
@@ -9,11 +15,6 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/jawher/mow.cli"
 	"github.com/rcrowley/go-metrics"
-	"net/http"
-	"os"
-	"os/signal"
-	"sync"
-	"syscall"
 )
 
 const appDescription = "Reads Splunk events via the Splunk REST API"
@@ -64,7 +65,7 @@ func initApp() *cli.Cli {
 	})
 	splunkURL := app.String(cli.StringOpt{
 		Name:   "splunk-url",
-		Desc:   "Splunk URL",
+		Desc:   "Splunk REST API URL",
 		EnvVar: "SPLUNK_URL",
 	})
 	log.SetLevel(log.InfoLevel)
