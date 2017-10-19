@@ -20,8 +20,8 @@ import (
 const (
 	splunkEndpoint            = "/services/search/jobs/export?output_mode=json"
 	defaultEarliestTime       = "-10m"
-	transactionsQueryTemplate = `search index="%s" source="http:upp" sourcetype="upp" monitoring_event=true (environment="%s" OR environment="pub-%s") (content_type="%s" OR content_type="") transaction_id!="SYNTHETIC*" transaction_id!="*carousel*"  | fields content_type, event, isValid, level, service_name, @time, transaction_id, uuid`
-	latestEventQueryTemplate  = `search index="%s" source="http:upp" sourcetype="upp" monitoring_event=true (environment="%s" OR environment="pub-%s") (content_type="%s" OR content_type="") event="PublishEnd" | fields content_type, event, isValid, level, service_name, @time, transaction_id, uuid | head 1`
+	transactionsQueryTemplate = `search index="heroku" source="http:upp" sourcetype="heroku:drain" monitoring_event=true (environment="%s" OR environment="pub-%s") (content_type="%s" OR content_type="") transaction_id!="SYNTHETIC*" transaction_id!="*carousel*"  | fields content_type, event, isValid, level, service_name, @time, transaction_id, uuid`
+	latestEventQueryTemplate  = `search index="heroku" source="http:upp" sourcetype="heroku:drain" monitoring_event=true (environment="%s" OR environment="pub-%s") (content_type="%s" OR content_type="") event="PublishEnd" | fields content_type, event, isValid, level, service_name, @time, transaction_id, uuid | head 1`
 	healthcheckQuery          = `search index=_audit | head 1`
 	healthCachePeriod         = time.Minute
 )
@@ -29,7 +29,6 @@ const (
 // ErrNoResults returned when the Splunk query yields no results
 var ErrNoResults = errors.New("No results")
 var regionRegex = regexp.MustCompile("-u[ks]]$")
-var envRegex = regexp.MustCompile("^(pub-)?(\\w+)$")
 
 // SplunkServiceI Splunk based event reader service
 type SplunkServiceI interface {
@@ -81,22 +80,8 @@ type splunkPublishEvent struct {
 	publishEvent
 }
 
-func determineIndex(env string) interface{} {
-	index := env
-
-	m := envRegex.FindStringSubmatch(env)
-
-	if len(m) >= 2 {
-		index = m[2]
-	}
-
-	index = fmt.Sprintf("%s_mon", index)
-
-	return index
-}
-
 func (service *splunkService) GetTransactions(query monitoringQuery) ([]transactionEvent, error) {
-	queryString := fmt.Sprintf(transactionsQueryTemplate, determineIndex(service.Config.environment), service.Config.environment, regionRegex.ReplaceAllString(service.Config.environment, "*"), query.ContentType)
+	queryString := fmt.Sprintf(transactionsQueryTemplate, service.Config.environment, regionRegex.ReplaceAllString(service.Config.environment, "*"), query.ContentType)
 
 	if len(query.UUIDs) > 0 {
 		queryString += " uuid IN ("
@@ -171,7 +156,7 @@ func (service *splunkService) GetTransactions(query monitoringQuery) ([]transact
 }
 
 func (service *splunkService) GetLastEvent(query monitoringQuery) (*publishEvent, error) {
-	queryString := fmt.Sprintf(latestEventQueryTemplate, determineIndex(service.Config.environment), service.Config.environment, regionRegex.ReplaceAllString(service.Config.environment, "*"), query.ContentType)
+	queryString := fmt.Sprintf(latestEventQueryTemplate, service.Config.environment, regionRegex.ReplaceAllString(service.Config.environment, "*"), query.ContentType)
 
 	v := url.Values{}
 	v.Set("search", queryString)
