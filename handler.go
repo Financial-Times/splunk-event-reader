@@ -1,0 +1,148 @@
+package main
+
+import (
+	"encoding/json"
+	"net/http"
+	"regexp"
+
+	"github.com/Sirupsen/logrus"
+	"github.com/gorilla/mux"
+	"github.com/satori/go.uuid"
+)
+
+const (
+	uuidPathVar            = "uuid"
+	intervalPathVar        = "interval"
+	lastEventPathVar       = "lastEvent"
+	contentTypePathVar     = "contentType"
+	contentTypeAnnotations = "annotations"
+)
+
+var (
+	contentTypes  = []string{contentTypeAnnotations}
+	intervalRegex = regexp.MustCompile(`^\d+[msh]$`)
+)
+
+type requestHandler struct {
+	splunkService SplunkServiceI
+}
+
+func (handler *requestHandler) getTransactions(writer http.ResponseWriter, request *http.Request) {
+	defer request.Body.Close()
+
+	contentType := mux.Vars(request)[contentTypePathVar]
+	uuids := request.URL.Query()[uuidPathVar]
+	interval := request.URL.Query().Get(intervalPathVar)
+
+	if !isValidContentType(contentType) {
+		logrus.Errorf("Invalid content type %s", contentType)
+		writer.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	for _, uuid := range uuids {
+		if !isValidUUID(uuid) {
+			logrus.Errorf("Invalid UUID %s", uuid)
+			writer.WriteHeader(http.StatusBadRequest)
+			return
+		}
+	}
+
+	if interval != "" && !isValidInterval(interval) {
+		logrus.Errorf("Invalid interval %s", interval)
+		writer.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	query := monitoringQuery{ContentType: contentType, UUIDs: uuids}
+	if interval != "" {
+		query.EarliestTime = "-" + interval
+	}
+	transactions, err := handler.splunkService.GetTransactions(query)
+
+	switch err {
+	case nil:
+		writer.WriteHeader(http.StatusOK)
+		msg, err := json.Marshal(transactions)
+		if err != nil {
+			logrus.Error(err)
+			writer.WriteHeader(http.StatusInternalServerError)
+		} else {
+			writer.Write([]byte(msg))
+		}
+	default:
+		logrus.Error(err)
+		writer.WriteHeader(http.StatusInternalServerError)
+	}
+}
+
+func (handler *requestHandler) getLastEvent(writer http.ResponseWriter, request *http.Request) {
+	defer request.Body.Close()
+
+	contentType := mux.Vars(request)[contentTypePathVar]
+	interval := request.URL.Query().Get(intervalPathVar)
+	lastEvent := request.URL.Query().Get(lastEventPathVar)
+
+	if !isValidContentType(contentType) {
+		logrus.Errorf("Invalid content type %s", contentType)
+		writer.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	if !isValidLastEventFlag(lastEvent) {
+		logrus.Errorf("lastEvent param must be true for the /events endpoint, value is %s", lastEvent)
+		writer.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	if interval != "" && !isValidInterval(interval) {
+		logrus.Errorf("Invalid interval %s", interval)
+		writer.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	query := monitoringQuery{ContentType: contentType}
+	if interval != "" {
+		query.EarliestTime = "-" + interval
+	}
+	publishEvent, err := handler.splunkService.GetLastEvent(query)
+
+	switch err {
+	case nil:
+		writer.WriteHeader(http.StatusOK)
+		msg, err := json.Marshal(*publishEvent)
+		if err != nil {
+			logrus.Error(err)
+			writer.WriteHeader(http.StatusInternalServerError)
+		} else {
+			writer.Write([]byte(msg))
+		}
+	case ErrNoResults:
+		writer.WriteHeader(http.StatusNotFound)
+	default:
+		logrus.Error(err)
+		writer.WriteHeader(http.StatusInternalServerError)
+	}
+}
+
+func isValidLastEventFlag(lastEvent string) bool {
+	return lastEvent == "true"
+}
+
+func isValidContentType(contentType string) bool {
+	for _, ct := range contentTypes {
+		if contentType == ct {
+			return true
+		}
+	}
+	return false
+}
+
+func isValidInterval(interval string) bool {
+	return intervalRegex.MatchString(interval)
+}
+
+func isValidUUID(id string) bool {
+	_, err := uuid.FromString(id)
+	return err == nil
+}

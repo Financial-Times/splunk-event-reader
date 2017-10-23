@@ -1,0 +1,6 @@
+*.iml
+.idea
+/splunk-event-reader*
+vendor/*/
+.project
+.vscode

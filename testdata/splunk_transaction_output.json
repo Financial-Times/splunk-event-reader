@@ -1,0 +1,89 @@
+[
+  {
+    "transaction_id": "tid_hamoil09hg",
+    "uuid": "27355ee6-e280-4fb8-b825-8f14be1be9d3",
+    "closed_txn": "0",
+    "duration": "15.752",
+    "eventcount": 6,
+    "events": [
+      {
+        "content_type": "",
+        "environment": "pub-xp",
+        "event": "Forwarding",
+        "level": "info",
+        "monitoring_event": "true",
+        "msg": "Message has been forwarded",
+        "platform": "up-coco",
+        "service_name": "cms-kafka-bridge-pub-prod",
+        "@time": "2017-09-19T13:59:48.248989749Z",
+        "transaction_id": "tid_hamoil09hg",
+        "uuid": ""
+      },
+      {
+        "content_type": "",
+        "environment": "pub-xp",
+        "event": "NativeSave",
+        "level": "info",
+        "monitoring_event": "true",
+        "msg": "Successfully saved",
+        "platform": "up-coco",
+        "service_name": "nativerw",
+        "@time": "2017-09-19T13:59:53.443287108Z",
+        "transaction_id": "tid_hamoil09hg",
+        "uuid": "27355ee6-e280-4fb8-b825-8f14be1be9d3"
+      },
+      {
+        "content_type": "",
+        "environment": "pub-xp",
+        "event": "Ingest",
+        "level": "info",
+        "monitoring_event": "true",
+        "msg": "Successfully ingested",
+        "platform": "up-coco",
+        "service_name": "native-ingester-cms",
+        "@time": "2017-09-19T13:59:53.44657054Z",
+        "transaction_id": "tid_hamoil09hg",
+        "uuid": "27355ee6-e280-4fb8-b825-8f14be1be9d3"
+      },
+      {
+        "content_type": "",
+        "environment": "xp",
+        "event": "Forwarding",
+        "level": "info",
+        "monitoring_event": "true",
+        "msg": "Message has been forwarded",
+        "platform": "up-coco",
+        "service_name": "cms-kafka-bridge-pub-xp",
+        "@time": "2017-09-19T13:59:58.442130319Z",
+        "transaction_id": "tid_hamoil09hg",
+        "uuid": ""
+      },
+      {
+        "content_type": "",
+        "environment": "xp",
+        "event": "Combine",
+        "level": "info",
+        "monitoring_event": "true",
+        "msg": "Successfully combined",
+        "platform": "up-coco",
+        "service_name": "post-publication-combiner",
+        "@time": "2017-09-19T14:00:03Z",
+        "transaction_id": "tid_hamoil09hg",
+        "uuid": "27355ee6-e280-4fb8-b825-8f14be1be9d3"
+      },
+      {
+        "content_type": "",
+        "environment": "xp",
+        "event": "ContentWriteElasticsearch",
+        "level": "info",
+        "monitoring_event": "true",
+        "msg": "Successfully saved",
+        "platform": "up-coco",
+        "service_name": "content-rw-elasticsearch",
+        "@time": "2017-09-19T14:00:04Z",
+        "transaction_id": "tid_hamoil09hg",
+        "uuid": "27355ee6-e280-4fb8-b825-8f14be1be9d3"
+      }
+    ]
+  }
+]
