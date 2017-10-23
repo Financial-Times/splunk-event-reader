@@ -67,7 +67,7 @@ Response example:
     uuid: "919b15c0-f5a9-4288-89c1-2c0420529a7a",
     closed_txn: "0",
     start_time: "2017-09-12T11:56:50.765463097Z",
-    eventcount: "7",
+    eventcount: 7,
     events: 
     [
         {
