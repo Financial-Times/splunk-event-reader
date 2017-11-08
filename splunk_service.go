@@ -34,7 +34,7 @@ var regionRegex = regexp.MustCompile("-u[ks]]$")
 type SplunkServiceI interface {
 	GetTransactions(query monitoringQuery) ([]transactionEvent, error)
 	GetLastEvent(query monitoringQuery) (*publishEvent, error)
-	doQuery(queryString string) ([]splunkRow, error)
+	doQuery(queryString string) (*http.Response, error)
 	IsHealthy() healthStatus
 }
 
@@ -100,7 +100,7 @@ func (service *splunkService) GetTransactions(query monitoringQuery) ([]transact
 		v.Set("earliest_time", defaultEarliestTime)
 	}
 
-	rows, err := service.doQuery(v.Encode())
+	resp, err := service.doQuery(v.Encode())
 
 	if err != nil {
 		return nil, err
@@ -109,40 +109,48 @@ func (service *splunkService) GetTransactions(query monitoringQuery) ([]transact
 	transactions := []transactionEvent{}
 
 	txMap := make(map[string]*transactionEvent)
-	for _, row := range rows {
-		if row.Result != nil && len(*row.Result) > 0 {
-			splunkEvent := splunkPublishEvent{}
+	decoder := json.NewDecoder(bufio.NewReader(resp.Body))
+	for {
+		row := splunkRow{}
+		err = decoder.Decode(&row)
+		if err == nil {
+			if row.Result != nil && len(*row.Result) > 0 {
+				splunkEvent := splunkPublishEvent{}
 
-			err = json.Unmarshal(*row.Result, &splunkEvent)
-			if err == io.EOF {
-				break
-			}
-			if err != nil {
-				return nil, err
-			}
+				err = json.Unmarshal(*row.Result, &splunkEvent)
+				if err == io.EOF {
+					break
+				}
+				if err != nil {
+					return nil, err
+				}
 
-			event := splunkEvent.publishEvent
+				event := splunkEvent.publishEvent
 
-			transaction := txMap[event.TransactionID]
+				transaction := txMap[event.TransactionID]
 
-			if transaction == nil {
-				transaction = &transactionEvent{}
-				transaction.TransactionID = event.TransactionID
-				transaction.ClosedTxn = "0"
-				txMap[event.TransactionID] = transaction
-			}
-			if event.UUID != "" {
-				transaction.UUID = event.UUID
-			}
+				if transaction == nil {
+					transaction = &transactionEvent{}
+					transaction.TransactionID = event.TransactionID
+					transaction.ClosedTxn = "0"
+					txMap[event.TransactionID] = transaction
+				}
+				if event.UUID != "" {
+					transaction.UUID = event.UUID
+				}
 
-			transaction.Events = append(transaction.Events, event)
-			transaction.EventCount++
-			if event.Event == "PublishStart" {
-				transaction.StartTime = event.Time
+				transaction.Events = append(transaction.Events, event)
+				transaction.EventCount++
+				if event.Event == "PublishStart" {
+					transaction.StartTime = event.Time
+				}
+				if event.Event == "PublishEnd" {
+					transaction.ClosedTxn = "1"
+				}
 			}
-			if event.Event == "PublishEnd" {
-				transaction.ClosedTxn = "1"
-			}
+		}
+		if err == io.EOF || row.LastRow {
+			break
 		}
 	}
 
@@ -164,28 +172,36 @@ func (service *splunkService) GetLastEvent(query monitoringQuery) (*publishEvent
 		v.Set("earliest_time", query.EarliestTime)
 	}
 
-	rows, err := service.doQuery(v.Encode())
+	resp, err := service.doQuery(v.Encode())
 	if err != nil {
 		return nil, err
 	}
 
-	if len(rows) > 0 {
-		row := rows[0]
-		splunkPublishEvent := splunkPublishEvent{}
-		if row.Result != nil && len(*row.Result) > 0 {
-			err = json.Unmarshal(*row.Result, &splunkPublishEvent)
-			if err != nil {
-				return nil, err
-			}
-			if err == nil {
-				return &splunkPublishEvent.publishEvent, nil
+	decoder := json.NewDecoder(bufio.NewReader(resp.Body))
+	for {
+		row := splunkRow{}
+		err = decoder.Decode(&row)
+		if err == nil {
+			splunkPublishEvent := splunkPublishEvent{}
+			if row.Result != nil && len(*row.Result) > 0 {
+				err = json.Unmarshal(*row.Result, &splunkPublishEvent)
+				if err != nil {
+					return nil, err
+				}
+				if err == nil {
+					return &splunkPublishEvent.publishEvent, nil
+				}
 			}
 		}
+		if err == io.EOF || row.LastRow {
+			break
+		}
 	}
+
 	return nil, ErrNoResults
 }
 
-func (service *splunkService) doQuery(query string) ([]splunkRow, error) {
+func (service *splunkService) doQuery(query string) (*http.Response, error) {
 	var resp *http.Response
 	httpCall := func() error {
 		req, err := http.NewRequest("POST", service.Config.restURL+splunkEndpoint, strings.NewReader(query))
@@ -208,19 +224,7 @@ func (service *splunkService) doQuery(query string) ([]splunkRow, error) {
 	}
 	service.lastHealth = healthStatus{message: "Splunk is ok", time: time.Now()}
 
-	var rows []splunkRow
-	decoder := json.NewDecoder(bufio.NewReader(resp.Body))
-	for {
-		row := splunkRow{}
-		err = decoder.Decode(&row)
-		if err == nil {
-			rows = append(rows, row)
-		}
-		if err == io.EOF || row.LastRow {
-			break
-		}
-	}
-	return rows, nil
+	return resp, nil
 }
 
 func (service *splunkService) IsHealthy() healthStatus {
