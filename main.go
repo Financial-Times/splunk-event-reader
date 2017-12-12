@@ -48,7 +48,7 @@ func initApp() *cli.Cli {
 	})
 	environment := app.String(cli.StringOpt{
 		Name:   "environment",
-		Value:  "xp",
+		Value:  "",
 		Desc:   "Name of the cluster",
 		EnvVar: "ENVIRONMENT",
 	})
