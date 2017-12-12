@@ -7,14 +7,14 @@
     "eventcount": 6,
     "events": [
       {
-        "content_type": "",
+        "content_type": "Annotations",
         "environment": "pub-xp",
         "event": "Forwarding",
         "level": "info",
         "monitoring_event": "true",
         "msg": "Message has been forwarded",
         "platform": "up-coco",
-        "service_name": "cms-kafka-bridge-pub-prod",
+        "service_name": "cms-metadata-kafka-bridge-pub-prod",
         "@time": "2017-09-19T13:59:48.248989749Z",
         "transaction_id": "tid_hamoil09hg",
         "uuid": ""
@@ -33,27 +33,27 @@
         "uuid": "27355ee6-e280-4fb8-b825-8f14be1be9d3"
       },
       {
-        "content_type": "",
+        "content_type": "Annotations",
         "environment": "pub-xp",
         "event": "Ingest",
         "level": "info",
         "monitoring_event": "true",
         "msg": "Successfully ingested",
         "platform": "up-coco",
-        "service_name": "native-ingester-cms",
+        "service_name": "native-ingester-metadata",
         "@time": "2017-09-19T13:59:53.44657054Z",
         "transaction_id": "tid_hamoil09hg",
         "uuid": "27355ee6-e280-4fb8-b825-8f14be1be9d3"
       },
       {
-        "content_type": "",
+        "content_type": "Annotations",
         "environment": "xp",
         "event": "Forwarding",
         "level": "info",
         "monitoring_event": "true",
         "msg": "Message has been forwarded",
         "platform": "up-coco",
-        "service_name": "cms-kafka-bridge-pub-xp",
+        "service_name": "cms-metadata-kafka-bridge-pub-xp",
         "@time": "2017-09-19T13:59:58.442130319Z",
         "transaction_id": "tid_hamoil09hg",
         "uuid": ""
