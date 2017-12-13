@@ -153,15 +153,12 @@ func (service *splunkService) GetTransactions(query monitoringQuery) ([]transact
 
 	for _, transaction := range txMap {
 		if transaction.ClosedTxn != "1" {
-			hasContentType := false
+			// if transaction has at least one event with the required content type: keep it
 			for _, event := range transaction.Events {
 				if strings.EqualFold(event.ContentType, query.ContentType) {
-					hasContentType = true
+					transactions = append(transactions, *transaction)
+					break
 				}
-			}
-
-			if hasContentType {
-				transactions = append(transactions, *transaction)
 			}
 		}
 	}
