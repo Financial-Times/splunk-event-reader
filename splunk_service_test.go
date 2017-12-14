@@ -19,7 +19,7 @@ func TestSplunkService_GetTransactions(t *testing.T) {
 		hasError   bool
 	}{
 		{"testdata/splunk_response_sample.json", "testdata/splunk_transaction_output.json", monitoringQuery{}, http.StatusOK, false},
-		{"testdata/splunk_response_sample.json", "testdata/splunk_transaction_output.json", monitoringQuery{UUIDs: []string{"27355ee6-e280-4fb8-b825-8f14be1be9d3"}, EarliestTime: "-5m"}, http.StatusOK, false},
+		{"testdata/splunk_response_sample.json", "testdata/splunk_transaction_output.json", monitoringQuery{UUIDs: []string{"27355ee6-e280-4fb8-b825-8f14be1be9d3"}, EarliestTime: "-15m", LatestTime: "-5m"}, http.StatusOK, false},
 		{"testdata/splunk_response_sample.json", "", monitoringQuery{}, http.StatusNotFound, true},
 	}
 
@@ -38,6 +38,9 @@ func TestSplunkService_GetTransactions(t *testing.T) {
 			}
 			if test.query.EarliestTime != "" {
 				assert.Contains(t, r.Form.Get("earliest_time"), test.query.EarliestTime)
+			}
+			if test.query.LatestTime != "" {
+				assert.Contains(t, r.Form.Get("latest_time"), test.query.LatestTime)
 			}
 			w.WriteHeader(test.status)
 			if test.status == http.StatusOK {

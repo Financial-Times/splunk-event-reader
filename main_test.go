@@ -160,8 +160,8 @@ func Test_GetTransactions(t *testing.T) {
 		{url: "http://localhost:8080/annotations/transactions", expectedStatus: http.StatusOK},
 		{url: "http://localhost:8080/annotations/transactions", flags: flags{error: true}, expectedStatus: http.StatusInternalServerError},
 		{url: "http://localhost:8080/INVALID_CONTENT_TYPE/transactions", expectedStatus: http.StatusBadRequest},
-		{url: "http://localhost:8080/annotations/transactions?interval=10m", expectedStatus: http.StatusOK},
-		{url: "http://localhost:8080/annotations/transactions?interval=1year", expectedStatus: http.StatusBadRequest},
+		{url: "http://localhost:8080/annotations/transactions?earliestTime=-10m", expectedStatus: http.StatusOK},
+		{url: "http://localhost:8080/annotations/transactions?earliestTime=-1year", expectedStatus: http.StatusBadRequest},
 		{url: "http://localhost:8080/annotations/transactions?uuid=191b9e5e-3356-4ae9-801f-0ce8d34f6cbe&uuid=0dd0a85f-2926-4371-a0d8-2ae13d738476", expectedStatus: http.StatusOK},
 		{url: "http://localhost:8080/annotations/transactions?uuid=INVALID_UUID&uuid=0dd0a85f-2926-4371-a0d8-2ae13d738476", expectedStatus: http.StatusBadRequest},
 	}
@@ -206,8 +206,8 @@ func Test_GetLastEvent(t *testing.T) {
 		{url: "http://localhost:8080/annotations/events?lastEvent=INVALID", expectedStatus: http.StatusBadRequest},
 		{url: "http://localhost:8080/annotations/events", expectedStatus: http.StatusBadRequest},
 		{url: "http://localhost:8080/INVALID_CONTENT_TYPE/events?lastEvent=true", expectedStatus: http.StatusBadRequest},
-		{url: "http://localhost:8080/annotations/events?lastEvent=true&interval=10m", expectedStatus: http.StatusOK},
-		{url: "http://localhost:8080/annotations/events?lastEvent=true&interval=1year", expectedStatus: http.StatusBadRequest},
+		{url: "http://localhost:8080/annotations/events?lastEvent=true&earliestTime=-10m", expectedStatus: http.StatusOK},
+		{url: "http://localhost:8080/annotations/events?lastEvent=true&earliestTime=-1year", expectedStatus: http.StatusBadRequest},
 	}
 
 	for _, test := range tests {

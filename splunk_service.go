@@ -21,7 +21,7 @@ const (
 	splunkEndpoint            = "/services/search/jobs/export?output_mode=json"
 	defaultEarliestTime       = "-10m"
 	transactionsQueryTemplate = `search index="heroku" source="http:upp" sourcetype="heroku:drain" monitoring_event=true (environment="%s" OR environment="pub-%s") (content_type="%s" OR content_type="") transaction_id!="SYNTHETIC*" transaction_id!="*carousel*"  | fields content_type, event, isValid, level, service_name, @time, transaction_id, uuid`
-	latestEventQueryTemplate  = `search index="heroku" source="http:upp" sourcetype="heroku:drain" monitoring_event=true (environment="%s" OR environment="pub-%s") (content_type="%s" OR content_type="") event="PublishEnd" | fields content_type, event, isValid, level, service_name, @time, transaction_id, uuid | head 1`
+	latestEventQueryTemplate  = `search index="heroku" source="http:upp" sourcetype="heroku:drain" monitoring_event=true (environment="%s" OR environment="pub-%s") content_type="%s" event="PublishEnd" | fields content_type, event, isValid, level, service_name, @time, transaction_id, uuid | head 1`
 	healthcheckQuery          = `search index=_audit | head 1`
 	healthCachePeriod         = time.Minute
 )
@@ -55,6 +55,7 @@ type splunkService struct {
 type monitoringQuery struct {
 	ContentType  string
 	EarliestTime string
+	LatestTime   string
 	UUIDs        []string
 }
 
@@ -98,6 +99,10 @@ func (service *splunkService) GetTransactions(query monitoringQuery) ([]transact
 	} else {
 
 		v.Set("earliest_time", defaultEarliestTime)
+	}
+
+	if query.LatestTime != "" {
+		v.Set("latest_time", query.LatestTime)
 	}
 
 	rows, err := service.doQuery(v.Encode())
@@ -148,7 +153,13 @@ func (service *splunkService) GetTransactions(query monitoringQuery) ([]transact
 
 	for _, transaction := range txMap {
 		if transaction.ClosedTxn != "1" {
-			transactions = append(transactions, *transaction)
+			// if transaction has at least one event with the required content type: keep it
+			for _, event := range transaction.Events {
+				if strings.EqualFold(event.ContentType, query.ContentType) {
+					transactions = append(transactions, *transaction)
+					break
+				}
+			}
 		}
 	}
 
