@@ -12,15 +12,16 @@ import (
 
 const (
 	uuidPathVar            = "uuid"
-	intervalPathVar        = "interval"
+	earliestTimePathVar    = "earliestTime"
+	latestTimePathVar      = "latestTime"
 	lastEventPathVar       = "lastEvent"
 	contentTypePathVar     = "contentType"
 	contentTypeAnnotations = "annotations"
 )
 
 var (
-	contentTypes  = []string{contentTypeAnnotations}
-	intervalRegex = regexp.MustCompile(`^\d+[msh]$`)
+	contentTypes    = []string{contentTypeAnnotations}
+	timePeriodRegex = regexp.MustCompile(`^-\d+[msh]$`)
 )
 
 type requestHandler struct {
@@ -32,7 +33,8 @@ func (handler *requestHandler) getTransactions(writer http.ResponseWriter, reque
 
 	contentType := mux.Vars(request)[contentTypePathVar]
 	uuids := request.URL.Query()[uuidPathVar]
-	interval := request.URL.Query().Get(intervalPathVar)
+	earliestTime := request.URL.Query().Get(earliestTimePathVar)
+	latestTime := request.URL.Query().Get(latestTimePathVar)
 
 	if !isValidContentType(contentType) {
 		logrus.Errorf("Invalid content type %s", contentType)
@@ -48,15 +50,24 @@ func (handler *requestHandler) getTransactions(writer http.ResponseWriter, reque
 		}
 	}
 
-	if interval != "" && !isValidInterval(interval) {
-		logrus.Errorf("Invalid interval %s", interval)
+	if earliestTime != "" && !isValidTimePeriod(earliestTime) {
+		logrus.Errorf("Invalid earliest time parameter %s", earliestTime)
+		writer.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	if latestTime != "" && !isValidTimePeriod(latestTime) {
+		logrus.Errorf("Invalid latest time parameter %s", latestTime)
 		writer.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
 	query := monitoringQuery{ContentType: contentType, UUIDs: uuids}
-	if interval != "" {
-		query.EarliestTime = "-" + interval
+	if earliestTime != "" {
+		query.EarliestTime = earliestTime
+	}
+	if latestTime != "" {
+		query.LatestTime = latestTime
 	}
 	transactions, err := handler.splunkService.GetTransactions(query)
 
@@ -80,7 +91,7 @@ func (handler *requestHandler) getLastEvent(writer http.ResponseWriter, request 
 	defer request.Body.Close()
 
 	contentType := mux.Vars(request)[contentTypePathVar]
-	interval := request.URL.Query().Get(intervalPathVar)
+	earliestTime := request.URL.Query().Get(earliestTimePathVar)
 	lastEvent := request.URL.Query().Get(lastEventPathVar)
 
 	if !isValidContentType(contentType) {
@@ -95,15 +106,15 @@ func (handler *requestHandler) getLastEvent(writer http.ResponseWriter, request 
 		return
 	}
 
-	if interval != "" && !isValidInterval(interval) {
-		logrus.Errorf("Invalid interval %s", interval)
+	if earliestTime != "" && !isValidTimePeriod(earliestTime) {
+		logrus.Errorf("Invalid interval %s", earliestTime)
 		writer.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
 	query := monitoringQuery{ContentType: contentType}
-	if interval != "" {
-		query.EarliestTime = "-" + interval
+	if earliestTime != "" {
+		query.EarliestTime = earliestTime
 	}
 	publishEvent, err := handler.splunkService.GetLastEvent(query)
 
@@ -138,8 +149,8 @@ func isValidContentType(contentType string) bool {
 	return false
 }
 
-func isValidInterval(interval string) bool {
-	return intervalRegex.MatchString(interval)
+func isValidTimePeriod(interval string) bool {
+	return timePeriodRegex.MatchString(interval)
 }
 
 func isValidUUID(id string) bool {

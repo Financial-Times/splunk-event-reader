@@ -53,11 +53,11 @@ Options:
 
 ### GET
 
-`/{contentType}/transactions?[interval={relativeTime}][&uuid={uuid}]`
+`/{contentType}/transactions?[earliestTime={-relativeTime}][&latestTime={-relativeTime}][&uuid={uuid}]`
 
 Returns a set of unclosed transactions in a given interval
 * contentType - type of content processed in the transactions to be returned. Currently only `annotations` are supported.
-* relativeTime - earliest time to search from, in minutes or seconds. Default is `10m`
+* relativeTime - time to search from/to, in minutes or seconds. Default is `-10m` for earliestTime; `now` for latestTime
 * uuid - filter transactions by uuid; supports multiple values
 
 Response example:
@@ -86,7 +86,7 @@ Response example:
 {...}]
 ```
 
-`/{contentType}/events?lastEvent=true&[]interval={relativeTime}]`
+`/{contentType}/events?lastEvent=true[&earliestTime={-relativeTime}]`
 
 Returns the last `PublishEnd` event within the interval
 
