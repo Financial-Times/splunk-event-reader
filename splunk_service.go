@@ -228,7 +228,7 @@ func (service *splunkService) doQuery(query string) (*http.Response, error) {
 		return nil
 	}
 
-	err := retry.Do(httpCall, retry.RetryChecker(func(e error) bool { return e != nil }), retry.MaxTries(2))
+	err := retry.Do(httpCall, retry.RetryChecker(func(e error) bool { return e != nil }), retry.MaxTries(3), retry.Sleep(time.Second))
 	if err != nil {
 		service.lastHealth = healthStatus{message: "Splunk error", err: err, time: time.Now()}
 		return nil, err
