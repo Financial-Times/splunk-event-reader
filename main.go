@@ -14,6 +14,7 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/jawher/mow.cli"
 	"github.com/rcrowley/go-metrics"
+	"time"
 )
 
 const appDescription = "Reads Splunk events via the Splunk REST API"
@@ -91,7 +92,16 @@ func routeRequests(splunkService SplunkServiceI, healthService *healthService, p
 
 	serveMux := http.NewServeMux()
 
-	hc := health.HealthCheck{SystemCode: healthService.config.appSystemCode, Name: healthService.config.appName, Description: appDescription, Checks: healthService.checks}
+	hc := health.TimedHealthCheck{
+		HealthCheck: health.HealthCheck{
+			SystemCode:  healthService.config.appSystemCode,
+			Name:        healthService.config.appName,
+			Description: appDescription,
+			Checks:      healthService.checks,
+		},
+		Timeout: 10 * time.Second,
+	}
+
 	serveMux.HandleFunc(healthPath, health.Handler(hc))
 	serveMux.HandleFunc(status.GTGPath, status.NewGoodToGoHandler(healthService.gtgCheck))
 	serveMux.HandleFunc(status.BuildInfoPath, status.BuildInfoHandler)
