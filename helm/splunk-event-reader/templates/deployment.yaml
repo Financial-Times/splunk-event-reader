@@ -39,6 +39,11 @@ spec:
             configMapKeyRef:
               name: global-config
               key: environment
+        - name: SPLUNK_INDEX
+          valueFrom:
+            configMapKeyRef:
+              name: global-config
+              key: splunk.index
         - name: SPLUNK_USER
           valueFrom: 
             secretKeyRef:
