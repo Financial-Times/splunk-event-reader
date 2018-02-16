@@ -33,7 +33,7 @@ spec:
         imagePullPolicy: {{ .Values.image.pullPolicy }}
         env:
         - name: APP_PORT
-          value: "{{ .Values.env.APP_PORT }}"
+          value: "8080"
         - name: ENVIRONMENT
           valueFrom:
             configMapKeyRef:
@@ -44,6 +44,11 @@ spec:
             configMapKeyRef:
               name: global-config
               key: splunk.index
+        - name: SPLUNK_URL
+          valueFrom:
+            configMapKeyRef:
+              name: global-config
+              key: splunk.url
         - name: SPLUNK_USER
           valueFrom: 
             secretKeyRef:
@@ -54,8 +59,6 @@ spec:
             secretKeyRef:
               name: splunk-event-reader
               key: splunk.rest-api.password
-        - name: SPLUNK_URL
-          value: "{{ .Values.env.SPLUNK_URL }}"
         ports: 
         - containerPort: 8080 
         livenessProbe: 

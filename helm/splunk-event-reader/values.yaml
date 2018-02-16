@@ -12,8 +12,5 @@ resources:
     memory: 300Mi
   limits:
     memory: 550Mi
-env:
-  APP_PORT: "8080"
-  SPLUNK_URL: "https://financialtimes.splunkcloud.com:8089"
 
 
