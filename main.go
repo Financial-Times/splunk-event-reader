@@ -14,6 +14,7 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/jawher/mow.cli"
 	"github.com/rcrowley/go-metrics"
+	"time"
 )
 
 const appDescription = "Reads Splunk events via the Splunk REST API"
@@ -52,6 +53,11 @@ func initApp() *cli.Cli {
 		Desc:   "Name of the cluster",
 		EnvVar: "ENVIRONMENT",
 	})
+	splunkIndex := app.String(cli.StringOpt{
+		Name:   "splunk-index",
+		Desc:   "Splunk index name",
+		EnvVar: "SPLUNK_INDEX",
+	})
 	splunkUser := app.String(cli.StringOpt{
 		Name:   "splunk-user",
 		Desc:   "Splunk user name",
@@ -72,7 +78,7 @@ func initApp() *cli.Cli {
 	app.Action = func() {
 		log.Infof("System code: %s, App Name: %s, Port: %s", *appSystemCode, *appName, *port)
 
-		splunkService := newSplunkService(splunkAccessConfig{user: *splunkUser, password: *splunkPassword, restURL: *splunkURL, environment: *environment})
+		splunkService := newSplunkService(splunkAccessConfig{user: *splunkUser, password: *splunkPassword, restURL: *splunkURL, environment: *environment, index: *splunkIndex})
 		healthService := newHealthService(healthConfig{appSystemCode: *appSystemCode, appName: *appName, port: *port}, splunkService.IsHealthy)
 
 		go func() {
@@ -91,7 +97,16 @@ func routeRequests(splunkService SplunkServiceI, healthService *healthService, p
 
 	serveMux := http.NewServeMux()
 
-	hc := health.HealthCheck{SystemCode: healthService.config.appSystemCode, Name: healthService.config.appName, Description: appDescription, Checks: healthService.checks}
+	hc := health.TimedHealthCheck{
+		HealthCheck: health.HealthCheck{
+			SystemCode:  healthService.config.appSystemCode,
+			Name:        healthService.config.appName,
+			Description: appDescription,
+			Checks:      healthService.checks,
+		},
+		Timeout: 10 * time.Second,
+	}
+
 	serveMux.HandleFunc(healthPath, health.Handler(hc))
 	serveMux.HandleFunc(status.GTGPath, status.NewGoodToGoHandler(healthService.gtgCheck))
 	serveMux.HandleFunc(status.BuildInfoPath, status.BuildInfoHandler)

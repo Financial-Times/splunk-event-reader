@@ -17,18 +17,38 @@ spec:
         app: {{ .Values.service.name }}
         visualize: "true" 
     spec:
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+          - labelSelector:
+              matchExpressions:
+              - key: app
+                operator: In
+                values:
+                - {{ .Values.service.name }}
+            topologyKey: "kubernetes.io/hostname"
       containers: 
       - name: {{ .Values.service.name }} 
         image: "{{ .Values.image.repository }}:{{ .Chart.Version }}"
         imagePullPolicy: {{ .Values.image.pullPolicy }}
         env:
         - name: APP_PORT
-          value: "{{ .Values.env.APP_PORT }}"
+          value: "8080"
         - name: ENVIRONMENT
           valueFrom:
             configMapKeyRef:
               name: global-config
               key: environment
+        - name: SPLUNK_INDEX
+          valueFrom:
+            configMapKeyRef:
+              name: global-config
+              key: splunk.index
+        - name: SPLUNK_URL
+          valueFrom:
+            configMapKeyRef:
+              name: global-config
+              key: splunk.url
         - name: SPLUNK_USER
           valueFrom: 
             secretKeyRef:
@@ -39,8 +59,6 @@ spec:
             secretKeyRef:
               name: splunk-event-reader
               key: splunk.rest-api.password
-        - name: SPLUNK_URL
-          value: "{{ .Values.env.SPLUNK_URL }}"
         ports: 
         - containerPort: 8080 
         livenessProbe: 

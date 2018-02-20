@@ -199,3 +199,20 @@ func TestSplunkService_IsHealthyCached(t *testing.T) {
 	assert.NoError(t, health.err)
 	assert.Equal(t, "Splunk is ok", health.message)
 }
+
+func TestRegex(t *testing.T) {
+
+	input := []struct {
+		dEnv string
+		env  string
+	}{
+		{"upp-staging-delivery-eu", "upp-staging"},
+		{"upp-k8s-dev-delivery-us", "upp-k8s-dev"},
+	}
+
+	for _, in := range input {
+		res := regionRegex.ReplaceAllString(in.dEnv, "")
+		assert.Equal(t, in.env, res)
+	}
+
+}

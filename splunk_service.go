@@ -20,15 +20,15 @@ import (
 const (
 	splunkEndpoint            = "/services/search/jobs/export?output_mode=json"
 	defaultEarliestTime       = "-10m"
-	transactionsQueryTemplate = `search index="heroku" source="http:upp" sourcetype="heroku:drain" monitoring_event=true (environment="%s" OR environment="pub-%s") (content_type="%s" OR content_type="") transaction_id!="SYNTHETIC*" transaction_id!="*carousel*"  | fields content_type, event, isValid, level, service_name, @time, transaction_id, uuid`
-	latestEventQueryTemplate  = `search index="heroku" source="http:upp" sourcetype="heroku:drain" monitoring_event=true (environment="%s" OR environment="pub-%s") content_type="%s" event="PublishEnd" | fields content_type, event, isValid, level, service_name, @time, transaction_id, uuid | head 1`
+	transactionsQueryTemplate = `search index="%s" monitoring_event=true (environment="%s" OR environment="%s-publish*") (content_type="%s" OR content_type="") transaction_id!="SYNTHETIC*" transaction_id!="*carousel*"  | fields content_type, event, isValid, level, service_name, @time, transaction_id, uuid`
+	latestEventQueryTemplate  = `search index="%s" monitoring_event=true (environment="%s" OR environment="%s-publish*") content_type="%s" event="PublishEnd" | fields content_type, event, isValid, level, service_name, @time, transaction_id, uuid | head 1`
 	healthcheckQuery          = `search index=_audit | head 1`
 	healthCachePeriod         = time.Minute
 )
 
 // ErrNoResults returned when the Splunk query yields no results
 var ErrNoResults = errors.New("No results")
-var regionRegex = regexp.MustCompile("-u[ks]]$")
+var regionRegex = regexp.MustCompile("-delivery-(eu|us)$")
 
 // SplunkServiceI Splunk based event reader service
 type SplunkServiceI interface {
@@ -43,6 +43,8 @@ type splunkAccessConfig struct {
 	password    string
 	restURL     string
 	environment string
+	region      string
+	index       string
 }
 
 type splunkService struct {
@@ -82,7 +84,7 @@ type splunkPublishEvent struct {
 }
 
 func (service *splunkService) GetTransactions(query monitoringQuery) ([]transactionEvent, error) {
-	queryString := fmt.Sprintf(transactionsQueryTemplate, service.Config.environment, regionRegex.ReplaceAllString(service.Config.environment, "*"), query.ContentType)
+	queryString := fmt.Sprintf(transactionsQueryTemplate, service.Config.index, service.Config.environment, regionRegex.ReplaceAllString(service.Config.environment, ""), query.ContentType)
 
 	if len(query.UUIDs) > 0 {
 		queryString += " uuid IN ("
@@ -175,7 +177,7 @@ func (service *splunkService) GetTransactions(query monitoringQuery) ([]transact
 }
 
 func (service *splunkService) GetLastEvent(query monitoringQuery) (*publishEvent, error) {
-	queryString := fmt.Sprintf(latestEventQueryTemplate, service.Config.environment, regionRegex.ReplaceAllString(service.Config.environment, "*"), query.ContentType)
+	queryString := fmt.Sprintf(latestEventQueryTemplate, service.Config.index, service.Config.environment, regionRegex.ReplaceAllString(service.Config.environment, ""), query.ContentType)
 
 	v := url.Values{}
 	v.Set("search", queryString)
@@ -228,7 +230,7 @@ func (service *splunkService) doQuery(query string) (*http.Response, error) {
 		return nil
 	}
 
-	err := retry.Do(httpCall, retry.RetryChecker(func(e error) bool { return e != nil }), retry.MaxTries(2))
+	err := retry.Do(httpCall, retry.RetryChecker(func(e error) bool { return e != nil }), retry.MaxTries(2), retry.Sleep(2*time.Second))
 	if err != nil {
 		service.lastHealth = healthStatus{message: "Splunk error", err: err, time: time.Now()}
 		return nil, err
