@@ -87,7 +87,7 @@ func (service *splunkService) GetTransactions(query monitoringQuery) ([]transact
 	queryString := fmt.Sprintf(transactionsQueryTemplate, service.Config.index, service.Config.environment, regionRegex.ReplaceAllString(service.Config.environment, ""), query.ContentType)
 
 	if len(query.UUIDs) > 0 {
-		queryString += " uuid IN ("
+		queryString += " | search uuid IN ("
 		for _, uuid := range query.UUIDs {
 			queryString += fmt.Sprintf(`"%s",`, uuid)
 		}
