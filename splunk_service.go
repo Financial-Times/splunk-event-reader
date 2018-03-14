@@ -66,9 +66,15 @@ type searchResponse struct {
 }
 
 type jobDetailsContent struct {
-	DispatchState string   `json:"dispatchState"`
-	Messages      []string `json:"messages"`
-	IsDone        bool     `json:"isDone"`
+	DispatchState string       `json:"dispatchState"`
+	Messages      []jobMessage `json:"messages"`
+	IsDone        bool         `json:"isDone"`
+}
+
+type jobMessage struct {
+	Type string `json:"type"`
+	Text string `json:"text"`
+	Help string `json:"help"`
 }
 
 type jobDetailsEntry struct {
