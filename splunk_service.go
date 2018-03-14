@@ -214,7 +214,7 @@ func (service *splunkService) doQuery(query string) (*http.Response, error) {
 			return err
 		}
 
-		serviceUrl := fmt.Sprintf("%v%v/%v/results?output_mode=json", service.Config.restURL, splunkEndpoint, sid)
+		serviceUrl := fmt.Sprintf("%v%v/%v/results?count=0&output_mode=json", service.Config.restURL, splunkEndpoint, sid)
 		req, err := http.NewRequest("GET", serviceUrl, nil)
 		req.SetBasicAuth(service.Config.user, service.Config.password)
 		resp, err = service.HTTPClient.Do(req)
