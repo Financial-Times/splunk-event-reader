@@ -34,7 +34,6 @@ func TestSplunkService_GetTransactions(t *testing.T) {
 				r.ParseForm()
 
 				for _, uuid := range test.query.UUIDs {
-
 					assert.Contains(t, r.Form.Get("search"), uuid)
 				}
 				if test.query.EarliestTime != "" {
@@ -234,9 +233,10 @@ func TestRegex(t *testing.T) {
 }
 
 func writeResponse(w http.ResponseWriter, r *http.Request, mainResponse func()) {
-	if strings.Contains(r.RequestURI, "/results") {
+	switch {
+	case strings.Contains(r.RequestURI, "/results"):
 		mainResponse()
-	} else if strings.Contains(r.RequestURI, "_sid") {
+	case strings.Contains(r.RequestURI, "_sid"):
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte(`{
 										"entry": [
@@ -252,8 +252,9 @@ func writeResponse(w http.ResponseWriter, r *http.Request, mainResponse func()) 
 									}
 									`))
 
-	} else {
+	default:
 		w.WriteHeader(http.StatusCreated)
 		w.Write([]byte(`{"sid":"test_sid"}`))
+
 	}
 }

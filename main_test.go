@@ -32,13 +32,14 @@ func TestMain(m *testing.M) {
 			status := http.StatusOK
 			var inputFile string
 			var inputJSON []byte
-			if strings.Contains(r.RequestURI, "audit_sid/results") {
+			switch {
+			case strings.Contains(r.RequestURI, "audit_sid/results"):
 				inputFile = "testdata/splunk_audit_response.json"
-			} else if strings.Contains(r.RequestURI, "last_event_sid/results") {
+			case strings.Contains(r.RequestURI, "last_event_sid/results"):
 				inputFile = "testdata/splunk_publish_end_sample.json"
-			} else if strings.Contains(r.RequestURI, "transactions_sid/results") {
+			case strings.Contains(r.RequestURI, "transactions_sid/results"):
 				inputFile = "testdata/splunk_response_sample.json"
-			} else if strings.Contains(r.RequestURI, "_sid") {
+			case strings.Contains(r.RequestURI, "_sid"):
 				inputJSON = []byte(`{
 										"entry": [
 											{
@@ -52,13 +53,13 @@ func TestMain(m *testing.M) {
 										]
 									}
 									`)
-			} else if strings.Contains(r.PostForm.Get("search"), "audit") {
+			case strings.Contains(r.PostForm.Get("search"), "audit"):
 				inputJSON = []byte(`{"sid":"audit_sid"}`)
 				status = http.StatusCreated
-			} else if strings.Contains(r.PostForm.Get("search"), "head") {
+			case strings.Contains(r.PostForm.Get("search"), "head"):
 				inputJSON = []byte(`{"sid":"last_event_sid"}`)
 				status = http.StatusCreated
-			} else {
+			default:
 				inputJSON = []byte(`{"sid":"transactions_sid"}`)
 				status = http.StatusCreated
 			}
