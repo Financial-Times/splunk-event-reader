@@ -1,25 +1,24 @@
-{ 
-  "preview": false,
-  "offset": 0,
-  "lastrow": true,
-  "result": {
-    "_bkt": "_audit~19~EB51ED03-99CA-44D0-B3F3-B9FC897C59C4",
-    "_cd": "19:4993609",
-    "_indextime": "1505986474",
-    "_raw": "Audit:[timestamp=09-21-2017 09:34:34.895, user=splunk-system-user, action=search, info=granted REST: /search/jobs/remote_sh1.acme.splunkcloud.com_1505986445.563263/search.log][n/a]",
-    "_serial": "0",
-    "_si": [
-      "idx6.acme.splunkcloud.com",
-      "_audit"
-    ],
-    "_sourcetype": "audittrail",
-    "_subsecond": ".895652",
-    "_time": "2017-09-21 02:34:34.895 PDT",
-    "host": "idx6.acme.splunkcloud.com",
-    "index": "_audit",
-    "linecount": "1",
-    "source": "audittrail",
-    "sourcetype": "audittrail",
-    "splunk_server": "idx6.acme.splunkcloud.com"
-  }
+{
+  "results": [
+    {
+      "_bkt": "_audit~19~EB51ED03-99CA-44D0-B3F3-B9FC897C59C4",
+      "_cd": "19:4993609",
+      "_indextime": "1505986474",
+      "_raw": "Audit:[timestamp=09-21-2017 09:34:34.895, user=splunk-system-user, action=search, info=granted REST: /search/jobs/remote_sh1.acme.splunkcloud.com_1505986445.563263/search.log][n/a]",
+      "_serial": "0",
+      "_si": [
+        "idx6.acme.splunkcloud.com",
+        "_audit"
+      ],
+      "_sourcetype": "audittrail",
+      "_subsecond": ".895652",
+      "_time": "2017-09-21 02:34:34.895 PDT",
+      "host": "idx6.acme.splunkcloud.com",
+      "index": "_audit",
+      "linecount": "1",
+      "source": "audittrail",
+      "sourcetype": "audittrail",
+      "splunk_server": "idx6.acme.splunkcloud.com"
+    }
+  ]
 }

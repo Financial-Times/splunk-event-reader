@@ -29,17 +29,49 @@ func TestMain(m *testing.M) {
 		if testFlags.error {
 			w.WriteHeader(http.StatusInternalServerError)
 		} else {
-			w.WriteHeader(http.StatusOK)
+			status := http.StatusOK
 			var inputFile string
-			if strings.Contains(r.PostForm.Get("search"), "audit") {
+			var inputJSON []byte
+			switch {
+			case strings.Contains(r.RequestURI, "audit_sid/results"):
+				inputFile = "testdata/splunk_audit_response.json"
+			case strings.Contains(r.RequestURI, "last_event_sid/results"):
 				inputFile = "testdata/splunk_publish_end_sample.json"
-			} else if strings.Contains(r.PostForm.Get("search"), "head 1") {
-				inputFile = "testdata/splunk_publish_end_sample.json"
-			} else {
+			case strings.Contains(r.RequestURI, "transactions_sid/results"):
 				inputFile = "testdata/splunk_response_sample.json"
+			case strings.Contains(r.RequestURI, "_sid"):
+				inputJSON = []byte(`{
+										"entry": [
+											{
+												"content":
+												{
+													"dispatchState": "DONE",
+													"isDone": true,
+													"messages": []
+												}
+											}
+										]
+									}
+									`)
+			case strings.Contains(r.PostForm.Get("search"), "audit"):
+				inputJSON = []byte(`{"sid":"audit_sid"}`)
+				status = http.StatusCreated
+			case strings.Contains(r.PostForm.Get("search"), "head"):
+				inputJSON = []byte(`{"sid":"last_event_sid"}`)
+				status = http.StatusCreated
+			default:
+				inputJSON = []byte(`{"sid":"transactions_sid"}`)
+				status = http.StatusCreated
 			}
-			inputJSON, _ := ioutil.ReadFile(inputFile)
-			if !testFlags.noResults {
+
+			w.WriteHeader(status)
+
+			if inputJSON == nil {
+				inputJSON, _ = ioutil.ReadFile(inputFile)
+			}
+			if testFlags.noResults && strings.Contains(r.RequestURI, "/results") {
+				w.Write([]byte(`{"results":[]}`))
+			} else {
 				w.Write(inputJSON)
 			}
 		}
