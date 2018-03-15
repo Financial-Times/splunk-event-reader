@@ -65,6 +65,14 @@ type searchResponse struct {
 	Results []publishEvent `json:"results"`
 }
 
+type jobDetails struct {
+	Entry []jobDetailsEntry `json:"entry"`
+}
+
+type jobDetailsEntry struct {
+	Content jobDetailsContent `json:"content"`
+}
+
 type jobDetailsContent struct {
 	DispatchState string       `json:"dispatchState"`
 	Messages      []jobMessage `json:"messages"`
@@ -75,14 +83,6 @@ type jobMessage struct {
 	Type string `json:"type"`
 	Text string `json:"text"`
 	Help string `json:"help"`
-}
-
-type jobDetailsEntry struct {
-	Content jobDetailsContent `json:"content"`
-}
-
-type jobDetails struct {
-	Entry []jobDetailsEntry `json:"entry"`
 }
 
 type sidResponse struct {
@@ -198,6 +198,7 @@ func (service *splunkService) GetLastEvent(query monitoringQuery) (*publishEvent
 
 func (service *splunkService) doQuery(query string) (*http.Response, error) {
 	var resp *http.Response
+	// call blocks until job finishes
 	query = query + "&exec_mode=blocking&output_mode=json"
 	httpCall := func() error {
 		sid, err := service.newJob(query)
@@ -214,6 +215,7 @@ func (service *splunkService) doQuery(query string) (*http.Response, error) {
 			return err
 		}
 
+		// fetch results and disable the default result count limit (0 = disabled)
 		serviceUrl := fmt.Sprintf("%v%v/%v/results?count=0&output_mode=json", service.Config.restURL, splunkEndpoint, sid)
 		req, err := http.NewRequest("GET", serviceUrl, nil)
 		req.SetBasicAuth(service.Config.user, service.Config.password)
@@ -228,17 +230,26 @@ func (service *splunkService) doQuery(query string) (*http.Response, error) {
 	}
 
 	err := retry.Do(httpCall, retry.RetryChecker(func(e error) bool { return e != nil }), retry.MaxTries(2), retry.Sleep(2*time.Second))
+	service.updateHealth(err)
 	if err != nil {
-		service.lastHealth = healthStatus{message: "Splunk error", err: err, time: time.Now()}
 		return nil, err
 	}
-	service.lastHealth = healthStatus{message: "Splunk is ok", time: time.Now()}
 
 	return resp, nil
 }
 
+func (service *splunkService) updateHealth(err error) {
+	if err != nil {
+		service.lastHealth = healthStatus{message: "Splunk error", err: err, time: time.Now()}
+	} else {
+		service.lastHealth = healthStatus{message: "Splunk is ok", time: time.Now()}
+	}
+}
+
 func validateJob(sid string, job *jobDetails) error {
 	if len(job.Entry) > 0 {
+		// mainly looking for warnings caused by index failures (type=WARN), but we treat any message as a bad omen for now
+		// note that index failures still result in status=DONE
 		if len(job.Entry[0].Content.Messages) > 0 {
 			message := fmt.Sprintf("Splunk job %v has status %v with messages: %v", sid, job.Entry[0].Content.DispatchState, job.Entry[0].Content.Messages)
 			log.Printf(message)
