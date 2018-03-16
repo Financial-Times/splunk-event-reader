@@ -89,6 +89,18 @@ type sidResponse struct {
 	Sid string `json:"sid"`
 }
 
+type JobFailure struct {
+	message string
+}
+
+func (jobFailure *JobFailure) Error() string {
+	return jobFailure.message
+}
+
+func NewJobFailure(message string) error {
+	return &JobFailure{message: message}
+}
+
 func (service *splunkService) GetTransactions(query monitoringQuery) ([]transactionEvent, error) {
 	queryString := fmt.Sprintf(transactionsQueryTemplate, service.Config.index, service.Config.environment, regionRegex.ReplaceAllString(service.Config.environment, ""), query.ContentType)
 
@@ -239,6 +251,10 @@ func (service *splunkService) doQuery(query string) (*http.Response, error) {
 }
 
 func (service *splunkService) updateHealth(err error) {
+	switch err.(type) {
+	case *JobFailure:
+		err = nil
+	}
 	if err != nil {
 		service.lastHealth = healthStatus{message: "Splunk error", err: err, time: time.Now()}
 	} else {
@@ -253,13 +269,13 @@ func validateJob(sid string, job *jobDetails) error {
 		if len(job.Entry[0].Content.Messages) > 0 {
 			message := fmt.Sprintf("Splunk job %v has status %v with messages: %v", sid, job.Entry[0].Content.DispatchState, job.Entry[0].Content.Messages)
 			log.Printf(message)
-			return errors.New(message)
+			return NewJobFailure(message)
 		}
 
 		if job.Entry[0].Content.DispatchState == "FAILED" {
 			message := "Splunk job with sid %v is %v"
 			log.Printf(message, sid, job.Entry[0].Content.DispatchState)
-			return errors.New(message)
+			return NewJobFailure(message)
 		}
 	}
 	return nil
