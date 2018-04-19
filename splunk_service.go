@@ -131,6 +131,7 @@ func (service *splunkService) GetTransactions(query monitoringQuery) ([]transact
 		return nil, err
 	}
 
+	defer resp.Body.Close()
 	transactions := []transactionEvent{}
 
 	txMap := make(map[string]*transactionEvent)
@@ -192,7 +193,7 @@ func (service *splunkService) GetLastEvent(query monitoringQuery) (*publishEvent
 	if err != nil {
 		return nil, err
 	}
-
+	defer resp.Body.Close()
 	decoder := json.NewDecoder(bufio.NewReader(resp.Body))
 	response := searchResponse{}
 	err = decoder.Decode(&response)
@@ -233,15 +234,22 @@ func (service *splunkService) doQuery(query string) (*http.Response, error) {
 		req.SetBasicAuth(service.Config.user, service.Config.password)
 		resp, err = service.HTTPClient.Do(req)
 		if err != nil {
+			if resp != nil && resp.Body != nil {
+				resp.Body.Close()
+			}
 			return err
 		}
 		if resp.StatusCode != http.StatusOK {
+			if resp != nil && resp.Body != nil {
+				resp.Body.Close()
+			}
 			return errors.New(resp.Status)
 		}
 		return nil
 	}
 
 	err := retry.Do(httpCall, retry.RetryChecker(func(e error) bool { return e != nil }), retry.MaxTries(2), retry.Sleep(2*time.Second))
+
 	service.updateHealth(err)
 	if err != nil {
 		return nil, err
@@ -291,6 +299,7 @@ func (service *splunkService) newJob(query string) (string, error) {
 	if err != nil {
 		return "", err
 	}
+	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusCreated {
 		return "", errors.New(resp.Status)
 	}
@@ -313,6 +322,7 @@ func (service *splunkService) getJobDetails(sid string) (*jobDetails, error) {
 	if err != nil {
 		return nil, err
 	}
+	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusOK {
 		return nil, errors.New(resp.Status)
 	}
@@ -334,7 +344,10 @@ func (service *splunkService) IsHealthy() healthStatus {
 	v.Set("search", healthcheckQuery)
 	v.Set("earliest_time", "-10s")
 
-	service.doQuery(v.Encode())
+	resp, _ := service.doQuery(v.Encode())
+	if resp != nil && resp.Body != nil {
+		resp.Body.Close()
+	}
 	return service.lastHealth
 }
 
