@@ -44,7 +44,7 @@ func (hs *healthService) splunkCheck(check func() healthStatus) health.Check {
 		BusinessImpact:   "Monitoring of publishing events is hindered. SLA compliance cannot be tracked",
 		Name:             "Splunk healthcheck",
 		PanicGuide:       "https://dewey.ft.com/splunk-event-reader.html",
-		Severity:         1,
+		Severity:         2,
 		TechnicalSummary: "Splunk is not able to return results, therefore publishing transactions can not be processed. Check Splunk REST API availability.",
 		Checker: func() (msg string, err error) {
 			hs.Lock()
