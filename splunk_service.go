@@ -23,7 +23,7 @@ const (
 	transactionsQueryTemplate = `search index="%s" monitoring_event=true (environment="%s" OR environment="%s-publish*") (content_type="%s" OR content_type="") transaction_id!="SYNTHETIC*" transaction_id!="*carousel*"  | fields content_type, event, isValid, level, service_name, @time, transaction_id, uuid`
 	latestEventQueryTemplate  = `search index="%s" monitoring_event=true (environment="%s" OR environment="%s-publish*") content_type="%s" event="PublishEnd" | fields content_type, event, isValid, level, service_name, @time, transaction_id, uuid | head 1`
 	healthcheckQuery          = `search index=_audit | head 1`
-	healthCachePeriod         = time.Minute
+	healthCachePeriod         = time.Minute * 5
 )
 
 // ErrNoResults returned when the Splunk query yields no results
