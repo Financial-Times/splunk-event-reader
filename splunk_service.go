@@ -275,9 +275,13 @@ func validateJob(sid string, job *jobDetails) error {
 		// mainly looking for warnings caused by index failures (type=WARN), but we treat any message as a bad omen for now
 		// note that index failures still result in status=DONE
 		if len(job.Entry[0].Content.Messages) > 0 {
-			message := fmt.Sprintf("Splunk job %v has status %v with messages: %v", sid, job.Entry[0].Content.DispatchState, job.Entry[0].Content.Messages)
-			log.Printf(message)
-			return NewJobFailure(message)
+			for _, msg := range job.Entry[0].Content.Messages{
+				if msg.Type == "ERROR"{
+					message := fmt.Sprintf("Splunk job %v has status %v with messages: %v", sid, job.Entry[0].Content.DispatchState, job.Entry[0].Content.Messages)
+					log.Printf(message)
+					return NewJobFailure(message)
+				}
+			}
 		}
 
 		if job.Entry[0].Content.DispatchState == "FAILED" {
