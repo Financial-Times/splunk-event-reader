@@ -2,12 +2,14 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
 	"regexp"
 
-	"github.com/Sirupsen/logrus"
 	"github.com/gorilla/mux"
 	"github.com/satori/go.uuid"
+
+	"github.com/Financial-Times/go-logger/v2"
 )
 
 const (
@@ -26,9 +28,13 @@ var (
 
 type requestHandler struct {
 	splunkService SplunkServiceI
+	log           *logger.UPPLogger
 }
 
 func (handler *requestHandler) getTransactions(writer http.ResponseWriter, request *http.Request) {
+
+	log := handler.log
+
 	defer request.Body.Close()
 
 	contentType := mux.Vars(request)[contentTypePathVar]
@@ -37,27 +43,27 @@ func (handler *requestHandler) getTransactions(writer http.ResponseWriter, reque
 	latestTime := request.URL.Query().Get(latestTimePathVar)
 
 	if !isValidContentType(contentType) {
-		logrus.Errorf("Invalid content type %s", contentType)
+		log.Errorf("Invalid content type %s", contentType)
 		writer.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
 	for _, uuid := range uuids {
 		if !isValidUUID(uuid) {
-			logrus.Errorf("Invalid UUID %s", uuid)
+			log.Errorf("Invalid UUID %s", uuid)
 			writer.WriteHeader(http.StatusBadRequest)
 			return
 		}
 	}
 
 	if earliestTime != "" && !isValidTimePeriod(earliestTime) {
-		logrus.Errorf("Invalid earliest time parameter %s", earliestTime)
+		log.Errorf("Invalid earliest time parameter %s", earliestTime)
 		writer.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
 	if latestTime != "" && !isValidTimePeriod(latestTime) {
-		logrus.Errorf("Invalid latest time parameter %s", latestTime)
+		log.Errorf("Invalid latest time parameter %s", latestTime)
 		writer.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -71,23 +77,31 @@ func (handler *requestHandler) getTransactions(writer http.ResponseWriter, reque
 	}
 	transactions, err := handler.splunkService.GetTransactions(query)
 
-	switch err {
-	case nil:
-		writer.WriteHeader(http.StatusOK)
-		msg, err := json.Marshal(transactions)
-		if err != nil {
-			logrus.Error(err)
-			writer.WriteHeader(http.StatusInternalServerError)
-		} else {
-			writer.Write([]byte(msg))
-		}
-	default:
-		logrus.Error(err)
+	if err != nil {
+		log.Error(err)
 		writer.WriteHeader(http.StatusInternalServerError)
+		return
 	}
+
+	msg, err := json.Marshal(transactions)
+	if err != nil {
+		log.Error(err)
+		writer.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	if _, err = writer.Write([]byte(msg)); err != nil {
+		log.Error(err)
+		writer.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
 }
 
 func (handler *requestHandler) getLastEvent(writer http.ResponseWriter, request *http.Request) {
+
+	log := handler.log
+
 	defer request.Body.Close()
 
 	contentType := mux.Vars(request)[contentTypePathVar]
@@ -95,19 +109,19 @@ func (handler *requestHandler) getLastEvent(writer http.ResponseWriter, request 
 	lastEvent := request.URL.Query().Get(lastEventPathVar)
 
 	if !isValidContentType(contentType) {
-		logrus.Errorf("Invalid content type %s", contentType)
+		log.Errorf("Invalid content type %s", contentType)
 		writer.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
 	if !isValidLastEventFlag(lastEvent) {
-		logrus.Errorf("lastEvent param must be true for the /events endpoint, value is %s", lastEvent)
+		log.Errorf("lastEvent param must be true for the /events endpoint, value is %s", lastEvent)
 		writer.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
 	if earliestTime != "" && !isValidTimePeriod(earliestTime) {
-		logrus.Errorf("Invalid interval %s", earliestTime)
+		log.Errorf("Invalid interval %s", earliestTime)
 		writer.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -118,22 +132,29 @@ func (handler *requestHandler) getLastEvent(writer http.ResponseWriter, request 
 	}
 	publishEvent, err := handler.splunkService.GetLastEvent(query)
 
-	switch err {
-	case nil:
-		writer.WriteHeader(http.StatusOK)
-		msg, err := json.Marshal(*publishEvent)
-		if err != nil {
-			logrus.Error(err)
-			writer.WriteHeader(http.StatusInternalServerError)
+	if err != nil {
+		if errors.Is(err, ErrNoResults) {
+			writer.WriteHeader(http.StatusNotFound)
 		} else {
-			writer.Write([]byte(msg))
+			log.Error(err)
+			writer.WriteHeader(http.StatusInternalServerError)
 		}
-	case ErrNoResults:
-		writer.WriteHeader(http.StatusNotFound)
-	default:
-		logrus.Error(err)
-		writer.WriteHeader(http.StatusInternalServerError)
+		return
 	}
+
+	msg, err := json.Marshal(*publishEvent)
+	if err != nil {
+		log.Error(err)
+		writer.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	if _, err = writer.Write([]byte(msg)); err != nil {
+		log.Error(err)
+		writer.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
 }
 
 func isValidLastEventFlag(lastEvent string) bool {
