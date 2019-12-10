@@ -13,7 +13,6 @@ import (
 	"sync"
 	"time"
 
-	log "github.com/Sirupsen/logrus"
 	"github.com/giantswarm/retry-go"
 )
 
@@ -28,6 +27,7 @@ const (
 
 // ErrNoResults returned when the Splunk query yields no results
 var ErrNoResults = errors.New("No results")
+var ErrRetryLimit = errors.New("retry limit reached (2/2)")
 var regionRegex = regexp.MustCompile("-delivery-(eu|us)$")
 
 // SplunkServiceI Splunk based event reader service
@@ -90,15 +90,21 @@ type sidResponse struct {
 }
 
 type JobFailure struct {
-	message string
+	message       string
+	tid           string
+	dispatchState string
 }
 
 func (jobFailure *JobFailure) Error() string {
 	return jobFailure.message
 }
 
-func NewJobFailure(message string) error {
-	return &JobFailure{message: message}
+func NewJobFailure(Message, Tid, DispatchState string) *JobFailure {
+	return &JobFailure{
+		message:       Message,
+		tid:           Tid,
+		dispatchState: DispatchState,
+	}
 }
 
 func (service *splunkService) GetTransactions(query monitoringQuery) ([]transactionEvent, error) {
@@ -146,11 +152,14 @@ func (service *splunkService) GetTransactions(query monitoringQuery) ([]transact
 		transaction := txMap[event.TransactionID]
 
 		if transaction == nil {
-			transaction = &transactionEvent{}
-			transaction.TransactionID = event.TransactionID
-			transaction.ClosedTxn = "0"
+			transaction = &transactionEvent{
+				TransactionID: event.TransactionID,
+				ClosedTxn:     "0",
+			}
+
 			txMap[event.TransactionID] = transaction
 		}
+
 		if event.UUID != "" {
 			transaction.UUID = event.UUID
 		}
@@ -232,6 +241,7 @@ func (service *splunkService) doQuery(query string) (*http.Response, error) {
 		serviceUrl := fmt.Sprintf("%v%v/%v/results?count=0&output_mode=json", service.Config.restURL, splunkEndpoint, sid)
 		req, err := http.NewRequest("GET", serviceUrl, nil)
 		req.SetBasicAuth(service.Config.user, service.Config.password)
+
 		resp, err = service.HTTPClient.Do(req)
 		if err != nil {
 			if resp != nil && resp.Body != nil {
@@ -239,6 +249,7 @@ func (service *splunkService) doQuery(query string) (*http.Response, error) {
 			}
 			return err
 		}
+
 		if resp.StatusCode != http.StatusOK {
 			if resp != nil && resp.Body != nil {
 				resp.Body.Close()
@@ -275,19 +286,17 @@ func validateJob(sid string, job *jobDetails) error {
 		// mainly looking for warnings caused by index failures (type=WARN), but we treat any message as a bad omen for now
 		// note that index failures still result in status=DONE
 		if len(job.Entry[0].Content.Messages) > 0 {
-			for _, msg := range job.Entry[0].Content.Messages{
-				if msg.Type == "ERROR"{
+			for _, msg := range job.Entry[0].Content.Messages {
+				if msg.Type == "ERROR" {
 					message := fmt.Sprintf("Splunk job %v has status %v with messages: %v", sid, job.Entry[0].Content.DispatchState, job.Entry[0].Content.Messages)
-					log.Printf(message)
-					return NewJobFailure(message)
+					return NewJobFailure(message, "", "")
 				}
 			}
 		}
 
 		if job.Entry[0].Content.DispatchState == "FAILED" {
 			message := "Splunk job with sid %v is %v"
-			log.Printf(message, sid, job.Entry[0].Content.DispatchState)
-			return NewJobFailure(message)
+			return NewJobFailure(message, sid, job.Entry[0].Content.DispatchState)
 		}
 	}
 	return nil

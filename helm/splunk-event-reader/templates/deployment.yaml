@@ -49,6 +49,8 @@ spec:
             configMapKeyRef:
               name: global-config
               key: splunk.url
+       - name: LOG_LEVEL
+         value: "{{ .Values.env.LOG_LEVEL }}"
         - name: SPLUNK_USER
           valueFrom: 
             secretKeyRef:

@@ -1,11 +1,7 @@
 github.com/Financial-Times/go-fthealth v0.0.0-20181009114238-ca83ad65381f h1:QzpUQuWLBJI4Gc8ZsJMlbm1kOvSqzvCRgDeKtTrk2+s=
 github.com/Financial-Times/go-fthealth v0.0.0-20181009114238-ca83ad65381f/go.mod h1:gpAzq6W5rCheYlY32JOIxS/VjVcYHbC2PkMzQngHT9c=
-github.com/Financial-Times/go-logger/v2 v2.0.0 h1:amSYqq+6KmOS5E0mg4BtnO+6zLQK9OSWAALxXaaf8wA=
-github.com/Financial-Times/go-logger/v2 v2.0.0/go.mod h1:Jpky5JYSX7xjGUClfA9hEMDmn40tUbfQQITjVIFGQiM=
 github.com/Financial-Times/go-logger/v2 v2.0.1 h1:iekEfSsUtlkg+YkXTZo+/fIN2VbZ2/3Hl9yolP3z5X8=
 github.com/Financial-Times/go-logger/v2 v2.0.1/go.mod h1:Jpky5JYSX7xjGUClfA9hEMDmn40tUbfQQITjVIFGQiM=
-github.com/Financial-Times/http-handlers-go v1.0.0 h1:JUM9sioLVCJrUpns2vxoeGPI3SmK1OcS59hQhVhKY9U=
-github.com/Financial-Times/http-handlers-go v1.0.0/go.mod h1:MXwqEEyoKLYKgkyBEOoahXwYSuwrN18G7CqJLcrbyNc=
 github.com/Financial-Times/http-handlers-go/v2 v2.1.0 h1:kBj41WrDXUGUiLHEjWI1zQUbRTNEw0JxSaaXQwZkib8=
 github.com/Financial-Times/http-handlers-go/v2 v2.1.0/go.mod h1:Tgkc7TqJXl/NFxB8eP8CX7YU5X01gbrL55LqNzo4YVY=
 github.com/Financial-Times/service-status-go v0.0.0-20160323111542-3f5199736a3d h1:USNBTIof6vWGM49SYrxvC5Y8NqyDL3YuuYmID81ORZQ=
