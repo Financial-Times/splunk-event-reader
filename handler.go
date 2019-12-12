@@ -35,11 +35,7 @@ func (handler *requestHandler) getTransactions(writer http.ResponseWriter, reque
 
 	log := handler.log
 
-	defer func() {
-		if err := request.Body.Close(); err != nil {
-			log.Errorf("Couldn't Close Body request %s", err.Error())
-		}
-	}()
+	defer request.Body.Close()
 
 	contentType := mux.Vars(request)[contentTypePathVar]
 	uuids := request.URL.Query()[uuidPathVar]
@@ -96,6 +92,7 @@ func (handler *requestHandler) getTransactions(writer http.ResponseWriter, reque
 	if _, err = writer.Write([]byte(msg)); err != nil {
 		log.Error(err)
 		writer.WriteHeader(http.StatusInternalServerError)
+		return
 	}
 
 	writer.WriteHeader(http.StatusOK)
@@ -106,11 +103,7 @@ func (handler *requestHandler) getLastEvent(writer http.ResponseWriter, request 
 
 	log := handler.log
 
-	defer func() {
-		if err := request.Body.Close(); err != nil {
-			log.Errorf("Couldn't Close Body request %s", err.Error())
-		}
-	}()
+	defer request.Body.Close()
 
 	contentType := mux.Vars(request)[contentTypePathVar]
 	earliestTime := request.URL.Query().Get(earliestTimePathVar)
@@ -154,11 +147,13 @@ func (handler *requestHandler) getLastEvent(writer http.ResponseWriter, request 
 	if err != nil {
 		log.Error(err)
 		writer.WriteHeader(http.StatusInternalServerError)
+		return
 	}
 
 	if _, err = writer.Write([]byte(msg)); err != nil {
 		log.Error(err)
 		writer.WriteHeader(http.StatusInternalServerError)
+		return
 	}
 
 	writer.WriteHeader(http.StatusOK)
