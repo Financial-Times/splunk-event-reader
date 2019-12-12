@@ -87,14 +87,18 @@ func (handler *requestHandler) getTransactions(writer http.ResponseWriter, reque
 		return
 	}
 
-	writer.WriteHeader(http.StatusOK)
 	msg, err := json.Marshal(transactions)
 	if err != nil {
 		log.Error(err)
 		writer.WriteHeader(http.StatusInternalServerError)
 	}
 
-	writer.Write([]byte(msg))
+	if _, err = writer.Write([]byte(msg)); err != nil {
+		log.Error(err)
+		writer.WriteHeader(http.StatusInternalServerError)
+	}
+
+	writer.WriteHeader(http.StatusOK)
 
 }
 
@@ -136,7 +140,6 @@ func (handler *requestHandler) getLastEvent(writer http.ResponseWriter, request 
 	}
 	publishEvent, err := handler.splunkService.GetLastEvent(query)
 
-
 	if err != nil {
 		if errors.Is(err, ErrNoResults) {
 			writer.WriteHeader(http.StatusNotFound)
@@ -147,14 +150,18 @@ func (handler *requestHandler) getLastEvent(writer http.ResponseWriter, request 
 		return
 	}
 
-	writer.WriteHeader(http.StatusOK)
 	msg, err := json.Marshal(*publishEvent)
 	if err != nil {
 		log.Error(err)
 		writer.WriteHeader(http.StatusInternalServerError)
 	}
 
-	writer.Write([]byte(msg))
+	if _, err = writer.Write([]byte(msg)); err != nil {
+		log.Error(err)
+		writer.WriteHeader(http.StatusInternalServerError)
+	}
+
+	writer.WriteHeader(http.StatusOK)
 
 }
 
