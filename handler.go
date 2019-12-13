@@ -87,6 +87,7 @@ func (handler *requestHandler) getTransactions(writer http.ResponseWriter, reque
 	if err != nil {
 		log.Error(err)
 		writer.WriteHeader(http.StatusInternalServerError)
+		return
 	}
 
 	if _, err = writer.Write([]byte(msg)); err != nil {
@@ -94,8 +95,6 @@ func (handler *requestHandler) getTransactions(writer http.ResponseWriter, reque
 		writer.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-
-	writer.WriteHeader(http.StatusOK)
 
 }
 
@@ -155,8 +154,6 @@ func (handler *requestHandler) getLastEvent(writer http.ResponseWriter, request 
 		writer.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-
-	writer.WriteHeader(http.StatusOK)
 
 }
 
