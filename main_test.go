@@ -12,8 +12,6 @@ import (
 	"time"
 
 	fthealth "github.com/Financial-Times/go-fthealth/v1_1"
-	"github.com/Financial-Times/go-logger/v2"
-	cli "github.com/jawher/mow.cli"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -23,84 +21,6 @@ type flags struct {
 }
 
 var testFlags = flags{}
-
-func initApp() *cli.Cli {
-	app := cli.App("splunk-event-reader", appDescription)
-	appSystemCode := app.String(cli.StringOpt{
-		Name:   "app-system-code",
-		Value:  "splunk-event-reader",
-		Desc:   "System Code of the application",
-		EnvVar: "APP_SYSTEM_CODE",
-	})
-	appName := app.String(cli.StringOpt{
-		Name:   "app-name",
-		Value:  "Splunk Event Reader",
-		Desc:   "Application name",
-		EnvVar: "APP_NAME",
-	})
-	port := app.String(cli.StringOpt{
-		Name:   "port",
-		Value:  "8080",
-		Desc:   "Port to listen on",
-		EnvVar: "APP_PORT",
-	})
-	environment := app.String(cli.StringOpt{
-		Name:   "environment",
-		Value:  "",
-		Desc:   "Name of the cluster",
-		EnvVar: "ENVIRONMENT",
-	})
-	splunkIndex := app.String(cli.StringOpt{
-		Name:   "splunk-index",
-		Desc:   "Splunk index name",
-		EnvVar: "SPLUNK_INDEX",
-	})
-	splunkUser := app.String(cli.StringOpt{
-		Name:   "splunk-user",
-		Desc:   "Splunk user name",
-		EnvVar: "SPLUNK_USER",
-	})
-	splunkPassword := app.String(cli.StringOpt{
-		Name:   "splunk-password",
-		Desc:   "Splunk password",
-		EnvVar: "SPLUNK_PASSWORD",
-	})
-	splunkURL := app.String(cli.StringOpt{
-		Name:   "splunk-url",
-		Desc:   "Splunk REST API URL",
-		EnvVar: "SPLUNK_URL",
-	})
-
-	logLevel := app.String(cli.StringOpt{
-		Name:   "logLevel",
-		Value:  "INFO",
-		Desc:   "Logging level (DEBUG, INFO, WARN, ERROR)",
-		EnvVar: "LOG_LEVEL",
-	})
-
-	uppLogger := logger.NewUPPLogger(*appSystemCode, *logLevel)
-	uppLogger.Infof("[Startup] splunk-event-reader is starting ")
-
-	app.Action = func() {
-
-		uppLogger.Infof("System code: %s, App Name: %s, Port: %s", *appSystemCode, *appName, *port)
-		splunkService := newSplunkService(splunkAccessConfig{user: *splunkUser, password: *splunkPassword, restURL: *splunkURL, environment: *environment, index: *splunkIndex})
-		healthService := newHealthService(healthConfig{appSystemCode: *appSystemCode, appName: *appName, port: *port}, splunkService.IsHealthy)
-
-		go func() {
-			routeRequests(healthService, *port, requestHandler{
-				splunkService: splunkService,
-				log:           uppLogger,
-			}, )
-		}()
-
-		waitForSignal()
-		healthService.stop <- true
-
-	}
-
-	return app
-}
 
 func TestMain(m *testing.M) {
 

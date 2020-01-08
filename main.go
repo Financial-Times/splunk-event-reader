@@ -1,6 +1,7 @@
 package main
 
 import (
+	"log"
 	"net/http"
 	"os"
 	"os/signal"
@@ -21,6 +22,18 @@ import (
 const appDescription = "Reads Splunk events via the Splunk REST API"
 
 func main() {
+
+	app := initApp()
+
+	err := app.Run(os.Args)
+	if err != nil {
+		log.Fatalf("App could not start, error=[%s]\n", err)
+		return
+	}
+
+}
+
+func initApp() *cli.Cli {
 
 	app := cli.App("splunk-event-reader", appDescription)
 
@@ -104,11 +117,7 @@ func main() {
 
 	}
 
-	err := app.Run(os.Args)
-	if err != nil {
-		uppLogger.Errorf("App could not start, error=[%s]\n", err)
-		return
-	}
+	return app
 }
 
 func routeRequests(healthService *healthService, port string, rh requestHandler) {
