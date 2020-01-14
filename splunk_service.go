@@ -13,7 +13,6 @@ import (
 	"sync"
 	"time"
 
-	log "github.com/Sirupsen/logrus"
 	"github.com/giantswarm/retry-go"
 )
 
@@ -97,8 +96,10 @@ func (jobFailure *JobFailure) Error() string {
 	return jobFailure.message
 }
 
-func NewJobFailure(message string) error {
-	return &JobFailure{message: message}
+func NewJobFailure(message string) *JobFailure {
+	return &JobFailure{
+		message: message,
+	}
 }
 
 func (service *splunkService) GetTransactions(query monitoringQuery) ([]transactionEvent, error) {
@@ -146,11 +147,14 @@ func (service *splunkService) GetTransactions(query monitoringQuery) ([]transact
 		transaction := txMap[event.TransactionID]
 
 		if transaction == nil {
-			transaction = &transactionEvent{}
-			transaction.TransactionID = event.TransactionID
-			transaction.ClosedTxn = "0"
+			transaction = &transactionEvent{
+				TransactionID: event.TransactionID,
+				ClosedTxn:     "0",
+			}
+
 			txMap[event.TransactionID] = transaction
 		}
+
 		if event.UUID != "" {
 			transaction.UUID = event.UUID
 		}
@@ -194,6 +198,7 @@ func (service *splunkService) GetLastEvent(query monitoringQuery) (*publishEvent
 		return nil, err
 	}
 	defer resp.Body.Close()
+
 	decoder := json.NewDecoder(bufio.NewReader(resp.Body))
 	response := searchResponse{}
 	err = decoder.Decode(&response)
@@ -229,19 +234,21 @@ func (service *splunkService) doQuery(query string) (*http.Response, error) {
 		}
 
 		// fetch results and disable the default result count limit (0 = disabled)
-		serviceUrl := fmt.Sprintf("%v%v/%v/results?count=0&output_mode=json", service.Config.restURL, splunkEndpoint, sid)
-		req, err := http.NewRequest("GET", serviceUrl, nil)
+		serviceURL := fmt.Sprintf("%v%v/%v/results?count=0&output_mode=json", service.Config.restURL, splunkEndpoint, sid)
+		req, err := http.NewRequest("GET", serviceURL, nil)
 		req.SetBasicAuth(service.Config.user, service.Config.password)
+
 		resp, err = service.HTTPClient.Do(req)
 		if err != nil {
 			if resp != nil && resp.Body != nil {
-				resp.Body.Close()
+				_ = resp.Body.Close()
 			}
 			return err
 		}
+
 		if resp.StatusCode != http.StatusOK {
 			if resp != nil && resp.Body != nil {
-				resp.Body.Close()
+				_ = resp.Body.Close()
 			}
 			return errors.New(resp.Status)
 		}
@@ -275,18 +282,16 @@ func validateJob(sid string, job *jobDetails) error {
 		// mainly looking for warnings caused by index failures (type=WARN), but we treat any message as a bad omen for now
 		// note that index failures still result in status=DONE
 		if len(job.Entry[0].Content.Messages) > 0 {
-			for _, msg := range job.Entry[0].Content.Messages{
-				if msg.Type == "ERROR"{
+			for _, msg := range job.Entry[0].Content.Messages {
+				if msg.Type == "ERROR" {
 					message := fmt.Sprintf("Splunk job %v has status %v with messages: %v", sid, job.Entry[0].Content.DispatchState, job.Entry[0].Content.Messages)
-					log.Printf(message)
 					return NewJobFailure(message)
 				}
 			}
 		}
 
 		if job.Entry[0].Content.DispatchState == "FAILED" {
-			message := "Splunk job with sid %v is %v"
-			log.Printf(message, sid, job.Entry[0].Content.DispatchState)
+			message := fmt.Sprintf("Splunk job with sid %v is %v", sid, job.Entry[0].Content.DispatchState)
 			return NewJobFailure(message)
 		}
 	}
@@ -295,8 +300,8 @@ func validateJob(sid string, job *jobDetails) error {
 
 func (service *splunkService) newJob(query string) (string, error) {
 	var resp *http.Response
-	serviceUrl := fmt.Sprintf("%v%v", service.Config.restURL, splunkEndpoint)
-	req, err := http.NewRequest("POST", serviceUrl, strings.NewReader(query))
+	serviceURL := fmt.Sprintf("%v%v", service.Config.restURL, splunkEndpoint)
+	req, err := http.NewRequest("POST", serviceURL, strings.NewReader(query))
 	req.SetBasicAuth(service.Config.user, service.Config.password)
 	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 	resp, err = service.HTTPClient.Do(req)
@@ -304,6 +309,7 @@ func (service *splunkService) newJob(query string) (string, error) {
 		return "", err
 	}
 	defer resp.Body.Close()
+
 	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusCreated {
 		return "", errors.New(resp.Status)
 	}
@@ -318,15 +324,18 @@ func (service *splunkService) newJob(query string) (string, error) {
 }
 
 func (service *splunkService) getJobDetails(sid string) (*jobDetails, error) {
+
 	var resp *http.Response
-	serviceUrl := fmt.Sprintf("%v%v/%v?output_mode=json", service.Config.restURL, splunkEndpoint, sid)
-	req, err := http.NewRequest("GET", serviceUrl, nil)
+
+	serviceURL := fmt.Sprintf("%v%v/%v?output_mode=json", service.Config.restURL, splunkEndpoint, sid)
+	req, err := http.NewRequest("GET", serviceURL, nil)
 	req.SetBasicAuth(service.Config.user, service.Config.password)
 	resp, err = service.HTTPClient.Do(req)
 	if err != nil {
 		return nil, err
 	}
 	defer resp.Body.Close()
+
 	if resp.StatusCode != http.StatusOK {
 		return nil, errors.New(resp.Status)
 	}
@@ -350,7 +359,7 @@ func (service *splunkService) IsHealthy() healthStatus {
 
 	resp, _ := service.doQuery(v.Encode())
 	if resp != nil && resp.Body != nil {
-		resp.Body.Close()
+		_ = resp.Body.Close()
 	}
 	return service.lastHealth
 }

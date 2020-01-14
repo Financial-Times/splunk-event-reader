@@ -7,22 +7,18 @@
 Reads Splunk monitoring events and transactions via the Splunk REST API
 
 ## Installation
-      
-Download the source code, dependencies and test dependencies:
 
-        go get -u github.com/kardianos/govendor
         go get -u github.com/Financial-Times/splunk-event-reader
         cd $GOPATH/src/github.com/Financial-Times/splunk-event-reader
-        govendor sync
-        go build .
+        go build -mod=readonly .
 
 ## Running locally
 
 1. Run the tests and install the binary:
 
-        govendor sync
-        govendor test -v -race
-        go install
+        go build -mod=readonly .
+        ./splunk-event-reader
+        
 
 2. Run the binary (using the `help` flag to see the available optional arguments):
 
@@ -43,6 +39,12 @@ Options:
     Using curl:
 
             curl http://localhost:8080/transactions | json_pp
+
+## Running the tests                  
+
+```shell
+go test -mod=readonly -race ./...
+```
 
 ## Build and deployment
 
@@ -130,5 +132,9 @@ As Splunk requests may fail due to these (or other) limitation, a retry mechanis
 
 ### Logging
 
-* The application uses [logrus](https://github.com/Sirupsen/logrus); the log file is initialised in [main.go](main.go).
-* NOTE: `/__build-info` and `/__gtg` endpoints are not logged as they are called every second and this information is not needed in logs/splunk.
+- The application uses [go-logger v2](https://github.com/Financial-Times/go-logger/tree/v2); the log file is initialised in [main.go](main.go).
+- Logging requires an `env` app parameter, for all environments other than `local` logs are written to file.
+- When running locally, logs are written to console. If you want to log locally to file, you need to pass in an env 
+parameter that is != `local`.
+- NOTE: `/__build-info` and `/__gtg` endpoints are not logged as they are called every second from varnish/vulcand 
+and this information is not needed in logs/splunk.
