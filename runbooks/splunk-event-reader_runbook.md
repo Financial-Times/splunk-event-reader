@@ -90,10 +90,7 @@ Manual
 
 ## Release Details
 
-Manual failover is needed when a new version of
-the service is deployed to production.
-Otherwise, an automated failover is going to take place when releasing.
-For more details about the failover process please see: <https://github.com/Financial-Times/upp-docs/tree/master/failover-guides/delivery-cluster>
+None provided
 
 ## Key Management Process Type
 
