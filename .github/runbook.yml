@@ -35,4 +35,4 @@ runbooks:
   # runbook.md tries to parse the system code from the runbook's filename (format: my-sys-code_runbook.md)
   systemCodes:
     # paths are relative to root, omitting ./ (case-insensitive)
-    splunk-event-reader: runbooks/splunk-event-reader_runbook.md
+    splunk-event-reader: runbooks/runbook.md
