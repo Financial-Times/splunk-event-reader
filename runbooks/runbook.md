@@ -2,9 +2,6 @@
 
 Splunk Event Reader reads Splunk monitoring events and transactions via the Splunk REST API.
 
-## Code
-
-splunk-event-reader
 
 ## Primary URL
 
