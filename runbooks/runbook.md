@@ -8,7 +8,7 @@ Splunk Event Reader reads Splunk monitoring events and transactions via the Splu
 
 ## Service Tier
 
-Platinum
+Bronze
 
 ## Lifecycle Stage
 
