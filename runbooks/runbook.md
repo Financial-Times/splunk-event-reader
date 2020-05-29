@@ -2,7 +2,6 @@
 
 Splunk Event Reader reads Splunk monitoring events and transactions via the Splunk REST API.
 
-
 ## Primary URL
 
 <https://upp-prod-delivery-glb.upp.ft.com/__splunk-event-reader/>
