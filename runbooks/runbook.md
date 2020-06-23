@@ -86,7 +86,7 @@ Manual
 
 ## Release Details
 
-None provided
+Failover is not needed during release.
 
 ## Key Management Process Type
 
