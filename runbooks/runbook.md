@@ -14,23 +14,6 @@ Bronze
 
 Production
 
-## Delivered By
-
-content
-
-## Supported By
-
-content
-
-## Known About By
-
-- dimitar.terziev
-- hristo.georgiev
-- elitsa.pavlova
-- mihail.mihaylov
-- donislav.belev
-- robert.marinov
-
 ## Host Platform
 
 AWS
@@ -46,10 +29,6 @@ No
 ## Contains Sensitive Data
 
 No
-
-## Dependencies
-
-- splunkcloud
 
 ## Failover Architecture Type
 
