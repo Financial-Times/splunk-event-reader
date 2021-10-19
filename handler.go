@@ -6,8 +6,8 @@ import (
 	"net/http"
 	"regexp"
 
+	"github.com/google/uuid"
 	"github.com/gorilla/mux"
-	"github.com/satori/go.uuid"
 
 	"github.com/Financial-Times/go-logger/v2"
 )
@@ -175,6 +175,6 @@ func isValidTimePeriod(interval string) bool {
 }
 
 func isValidUUID(id string) bool {
-	_, err := uuid.FromString(id)
+	_, err := uuid.Parse(id)
 	return err == nil
 }
