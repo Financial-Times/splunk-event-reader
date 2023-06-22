@@ -52,13 +52,13 @@ spec:
         - name: SPLUNK_USER
           valueFrom:
             secretKeyRef:
-              name: splunk-event-reader
-              key: splunk.rest-api.user
+              name: doppler-global-secrets
+              key: SPLUNK_REST_API_USER
         - name: SPLUNK_PASSWORD
           valueFrom:
             secretKeyRef:
-              name: splunk-event-reader
-              key: splunk.rest-api.password
+              name: doppler-global-secrets
+              key: SPLUNK_REST_API_PASSWORD
         ports:
         - containerPort: 8080
         livenessProbe:
